@@ -53,7 +53,7 @@ export function toDSL(input: string): ESQuery {
  * @param query 用户输入的查询语句字符串
  * @param dsl 待加工的 DSL 语句
  */
-export const DSLTransformer = (query: string, from: number, size: number) => (dsl: ESQuery): ESQuery => {
+export const DSLTransformer = (query: string, from?: number, size?: number) => (dsl: ESQuery): ESQuery => {
   const [head] = query.split('|')
   const queryStr = head
     .trim()
