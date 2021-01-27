@@ -1,0 +1,803 @@
+/*
+ * Search Process Language for Elasticsearch
+ */
+
+{
+    var TIMESTAMP_FIELD = '_event_time';
+    var RAW_MESSAGE_FIELD = '_message';
+
+    function isEmptyObject(obj){
+       for(var key in obj){
+           return false;
+       }
+       return true
+    }
+
+
+}
+
+start
+  =
+  first:QueryCommand rest:(_? '|'? _? TailCommand)* _? {
+    var dsl = {};
+    var postProcess;
+    dsl = { "query" : first };
+    dsl["_source"] = {}
+     if (!!rest && !!rest.length) {
+       for(var i=0;i<rest.length;i++){
+          var cmd = rest[i][3];
+          if (!!Array.isArray(cmd)) {
+            dsl["aggs"] = cmd[0];
+            postProcess = cmd[1];
+            return [ dsl, postProcess ];
+          }else if(typeof cmd ==='object' && 'from' in cmd){
+             dsl["from"] = cmd["from"];
+             dsl["size"] = cmd["size"];
+          }else if(typeof cmd ==='object' && 'sort' in cmd){
+             dsl["sort"] = cmd["sort"];
+          }else if(typeof cmd ==='object' && '_source' in cmd){
+             dsl["_source"] = cmd["_source"];
+          }else if(typeof cmd ==='object' && 'script_fields' in cmd){
+              if(isEmptyObject(dsl["script_fields"])){
+                  dsl["script_fields"] = {}
+              }
+              for(var key in cmd['script_fields'] ){
+                  dsl["script_fields"][key] = cmd['script_fields'][key]
+              }
+          } else {
+             dsl["aggs"] = cmd;
+          }
+       }
+    }
+
+    return [ dsl ];
+  }
+  / EOF {
+  	return [];
+  }
+
+TailCommand
+  = StatsCommand
+  / BinCommand
+  / SigTermCommand
+  / TransCommand
+  / limitCommand
+  / sortCommand
+  // JoinCommand
+  / EvalCommand
+  / FieldCommand
+  / CountCommand
+  / parseCommand
+  / topCommand
+
+// Glue
+SEP
+  = '='
+
+_ "WhitespaceOrComment"
+  = Whitespace? Comment Whitespace?
+  / Whitespace
+
+Comment
+  = '#' [^\r\n]*
+
+Whitespace
+  = WhitespaceChar+
+
+WhitespaceChar
+  = [ \t\n\r]
+
+
+// Field names and values
+Field
+  = $[a-zA-Z0-9\._\-]+
+
+SortField
+  = $([a-zA-Z0-9\._\-]+_*[+-]?)
+
+Value
+  = $[a-zA-Z0-9\._\-]+
+Value2
+  = [a-zA-Z0-9\._\-\"\/\\\:\+\(\)\,\[\]\~\{\}\*\? ^=]+
+
+Boolean
+  = 'true' { return true; }
+  / 'false' { return false; }
+
+Integer
+  = num:[0-9]+ { return parseInt(num.join('')); }
+
+
+// Special values
+WildCardValue
+  = '"' chrs:DoubleQuotedChar* '"' { return chrs.join(''); }
+  / "'" chrs:SingleQuotedChar* "'" { return chrs.join(''); }
+  / chunks:WildCardChunk* { return chunks; }
+
+WildCardChunk
+  = '*' { return '*'; }
+  / '?' { return '?'; }
+  / chrs:EscapedChar+ { return chrs.join(''); }
+
+EscapedChar
+  = '\\' chr:MetaChar { return chr; }
+  / SpecialChar
+  / !MetaChar chr:. { return chr; }
+
+LiteralValue
+  = '"' chrs:DoubleQuotedChar* '"' { return chrs.join(''); }
+  / "'" chrs:SingleQuotedChar* "'" { return chrs.join(''); }
+  / chrs:LiteralChar+ { return chrs.join(''); }
+
+LiteralChar
+  = EscapedChar
+
+DoubleQuotedChar
+  = '\\"' { return '"'; }
+  / SpecialChar
+  / '\\'? chr:[^"] { return chr; }
+
+SingleQuotedChar
+  = "\\'" { return "'"; }
+  / chr:[^'] { return chr; }
+
+MetaChar
+  = chr:WhitespaceChar { return chr[0]; }
+  / '(' / ')'
+  / '{' / '}'
+  / '[' / ']'
+  / '+'
+  / '-'
+  / ':'
+  / '\\'
+  / '/'
+  / '@'
+  / '^'
+  / '|'
+  / '"'
+  / "'"
+  / '*'
+  / '?'
+
+SpecialChar
+  = '\\n' { return "\n"; }
+  / '\\r' { return "\r"; }
+  / '\\t' { return "\t"; }
+
+
+// Query command
+QueryCommand
+  =
+  termOR: QueryExpression* _? t1:Value2 {
+    //alert(!!t1.length)
+    //alert(t1)
+    //alert(termOR.length)
+    if(!!t1){
+    	t1=t1.join("");
+        //alert(t1)
+        t1 = t1.toString().replace(/\\"/g, "");
+        t1 = t1.toString().replace(/=/g, ":");
+    	return {
+        "query_string": {"query": t1, "default_field": RAW_MESSAGE_FIELD}
+        }
+    }else{
+    //alert(termOR)
+    	termOR = termOR.toString().replace(/NOT  ,NOT, ,/g, " AND NOT ");
+    	return {"query_string": {"query": termOR, "default_field": RAW_MESSAGE_FIELD}};
+    }
+
+
+
+  }
+
+
+
+  /
+  query:QueryExpression {
+    //alert(1)
+    query = query.toString().replace(/, ,AND, ,/g, " AND ");
+    query = query.toString().replace(/, ,OR, ,/g, " OR ");
+  	query = query.toString().replace(/,AND, ,/g, "");
+    query = query.toString().replace(/AND , ,/g, " AND ");
+    query = query.toString().replace(/,OR, ,/g, "");
+    query = query.toString().replace(/NOT  ,NOT, ,/g, " AND NOT ");
+    return {"query_string": {"query": query, "default_field": RAW_MESSAGE_FIELD}};
+  }
+  /'*' { return {"match_all" : {}}; }
+  /**
+  / term:Value {
+    alert(2)
+  	return {"query_string": {"query": term, "default_field": RAW_MESSAGE_FIELD}};
+  }**/
+  / termWord:LiteralValue {
+    //alert("L");
+  	return {"query_string": {"query": "\"" + termWord + "\"", "default_field": RAW_MESSAGE_FIELD}}
+  }
+
+
+
+
+
+
+QueryExpression
+  = QueryOR
+
+QueryOR
+  = a:QueryAND b:(_ 'OR' _ QueryAND)* {
+    //alert('OR')
+    if(!!(b) && !!(b.length)) {
+      //alert(b);
+      return '(' + a + ' OR ' + b + ')';
+    }
+    return a;
+  }
+
+QueryAND
+  =  a:QueryNOT b:((_ 'AND')? _ QueryNOT)* {
+    if(!!(b) && !!(b.length)) {
+      return a + ' AND ' + b;
+    }
+    return a;
+  }
+
+QueryNOT
+  =  a:QueryUnaryNOT b:(_ 'NOT' _ QueryUnaryNOT)? {
+    if(!!(b) && !!(b.length)) {
+      return a + ' NOT ' + b;
+    }
+    return a;
+  }
+
+QueryUnaryNOT
+  = neg:'-'? '(' _? expr:QueryExpression _? ')' {
+    if(neg) {
+      return '-(' + expr + ')';
+    }
+    return expr;
+  }
+  / neg:'-'? clause:QueryClause {
+    if(neg) {
+      clause = '-' + clause;
+    }
+    return clause;
+  }
+
+QueryClause
+  = '_exists_' SEP field:Field { return '_exists_:' + field; }
+
+  /*/ '_missing_' SEP field:Field { return 'NOT _exists_:' + field; }*/
+
+  / field:Field SEP a:QueryRangeLow _? lo:QueryRangeValue _ 'TO' _ hi:QueryRangeValue _? b:QueryRangeHigh
+     { return field + ':' + a +  lo + ' TO ' + hi + b; }
+
+  / field:Field SEP '^' val:LiteralValue { return field + ':^' + val; }
+
+  / field:Field SEP '/' regex:RegexValue '/' { return field + ':/' + regex + '/'; }
+
+  / field:Field SEP '(' _? first:WildCardValue rest:(_ WildCardValue)* _? ')' {
+    return [first, rest];
+  }
+
+  / field:Field SEP val:WildCardValue {return field + ':' + val; }
+
+
+
+RegexValue
+  = chrs:RegexChar* { return chrs.join(''); }
+
+RegexChar
+  = '\\/' { return '/'; }
+  / [^/]
+
+QueryRangeLow
+  = '['
+  / '{'
+
+QueryRangeHigh
+  = ']'
+  / '}'
+
+QueryRangeValue
+  = '*' { return null; }
+  / LiteralValue
+
+EOF
+  = !.
+// Direct Aggs command
+StatsCommand
+  = 'stats' _ func:StatsFunction alias:(AsFunction)* byGroups:(_ 'by' _ Groups)? {
+    var aggs = {};
+    function getAlias(func){
+        var alias = null;
+        for(var key in func){
+              alias = func[key]["field"];
+              if(key=="terms"){
+              	key="count";
+              }
+              if(key=="value_count"){
+                    key = "count";
+                    if(alias!=""){
+                        alias = key+"("+alias+")";
+                    }else{
+                    	alias = key+"()";
+                    }
+              }else{
+              		alias = key+"("+alias+")";
+              }
+              break;
+        }
+        return alias;
+     }
+    if (!!byGroups) {
+      var by = byGroups[3];
+      var i = 0;
+      function setTerms(aggs, i) {
+          aggs[by[i]] = {"terms":{"field":by[i],"size":1000},"aggs":{}};
+          if (i < by.length-1) {
+              setTerms(aggs[by[i]].aggs, i+1);
+          } else {
+              if(alias==null||alias==""){
+            	  alias = getAlias(func);
+                  if(alias=="count(_indexName)"){
+                     alias = "count()";
+                  }
+      		  }
+              var funcStr = JSON.stringify(func);
+              funcStr = funcStr.toString().replace(/top/g, "terms");
+              func = JSON.parse(funcStr);
+              aggs[by[i]].aggs[alias] = func;
+              return;
+          }
+      }
+      setTerms(aggs, i);
+    } else {
+    	var funcStr = JSON.stringify(func);
+        funcStr = funcStr.toString().replace(/terms/g, "value_count");
+        func = JSON.parse(funcStr);
+      	if(alias==null||alias==""){
+        	if(funcStr.indexOf("value_count") != -1){
+             	alias = "count()";
+            }else{
+            	alias = getAlias(func);
+            }
+      	}
+        funcStr = funcStr.toString().replace(/top/g, "terms");
+        func = JSON.parse(funcStr);
+      	aggs[alias] = func;
+    }
+    return aggs;
+  }
+
+StatsFunction
+  = type:AggType '(' _? group:GroupsOrNo _? ')' {
+      var agg = {};
+      var field = group[0];
+      if (typeof(type) == 'number') {
+          agg["percentiles"] = {"field": field, "percents": [type]};
+      } else if( type == 'top' ){
+          var n = 10;
+          if(group.length>1){
+            n = group[1];
+          }
+          agg[type]={};
+          field = ""+field;
+          agg[type]={
+             "field":field,"size":n,"order":{"_count":"desc"}
+          };
+      } else {
+      	  if(type == 'terms' && field==""){
+	            field = "_indexName";
+	      }
+          agg[type] = {"field": ""+field};
+      }
+      return agg;
+  }
+
+
+AsField=_'as'_ {
+     return;
+}
+
+AsFunction=AsField field:Field {
+	return field;
+}
+
+AggType
+  = 'count' { return 'terms'; }
+  / 'dc' { return 'cardinality'; }
+  / 'min' { return 'min'; }
+  / 'max' { return 'max'; }
+  / 'avg' { return 'avg'; }
+  / 'sum' { return 'sum'; }
+  / 'pct' pct:(Integer) { return pct; }
+  / 'es' { return 'extended_stats'; }
+  / 'top' { return 'top'; }
+SingleParamFunctionType
+  = 'abs' { return 'Math.abs'; }
+  / 'ceil' { return 'Math.ceil'; }
+  / 'floor' { return 'Math.floor'; }
+
+PairParamFunctionType
+  = 'max' { return 'Math.max'; }
+  / 'min' { return 'Math.min'; }
+
+AggSettings
+  = first:AggSetting rest:MoreAggSettings* {
+    var arr = [first].concat(rest);
+      var obj = {};
+      for (var i=0; i<arr.length; i++) {
+          obj = Object.assign(obj, arr[i]);
+      }
+      return obj;
+  }
+
+MoreAggSettings
+  = ','? _? arg:AggSetting { return arg;  }
+
+AggSetting
+  = field:Field SEP val:Value { var kv = {}; kv[field] = val; return kv; }
+
+Groups
+  = first:Field rest:MoreGroups* {
+    return [first].concat(rest);
+  }
+
+GroupsOrNo
+  = first:Field* rest:MoreGroups* {
+    return [first].concat(rest);
+  }
+
+FieldGroups
+  = first:Field rest:FieldMoreGroups* {
+    return [first].concat(rest);
+  }
+
+SortGroups
+  = first:SortField rest:SortMoreGroups* {
+    return [first].concat(rest);
+  }
+
+MoreGroups
+  = ','? _? field:Field { return field;  }
+
+FieldMoreGroups
+  = ',' _? field:Field { return field;  }
+
+SortMoreGroups
+  = ','? _? field:SortField { return field;  }
+
+SigTermCommand
+  = 'findkeywords' _ field:Field _ 'by' _ by:Groups {
+    var aggs = {};
+    var func = {"significant_terms":{"field": field}};
+    var i = 0;
+    function setTerms(aggs, i) {
+        aggs[i] = {"terms":{"field":by[i]},"aggs":{}};
+        if (i < by.length-1) {
+            setTerms(aggs[i].aggs, i+1);
+        } else {
+            aggs[i].aggs[i] = func;
+            return;
+        }
+    }
+    setTerms(aggs, i);
+    return aggs;
+  }
+
+limitCommand
+    = 'limit'_ num:Integer{
+    return {"from":0,"size":num};
+}
+
+sortCommand
+	='sort' _+ 'by' _+ group:SortGroups{
+    var map = {};
+    for(var i=0;i<group.length;i++){
+        var str = group[i];
+        if(str.lastIndexOf('+') != -1){
+        	var key = str.substring(0,str.length-1).trim();
+        	map[key]={"order":"asc"};
+        }else if(str.lastIndexOf('-') != -1){
+        	var key = str.substring(0,str.length-1).trim();
+        	map[key]={"order":"desc"};
+        }else{
+        	map[str.trim()]={"order":"desc"};
+        }
+    }
+    return{"sort":[map]};
+}
+
+FieldCommand
+	= 'fields' _* '['_*groups:Groups _*']'{
+    var map = {};
+    map["_source"] = [];
+    for(var i=0;i<groups.length;i++){
+      map["_source"].push(groups[i]);
+    }
+    return map;
+}
+
+parseCommand
+	= 'parse'_* regepx:LiteralValue _'as'_* newFieldName:Field {
+    var map = {};
+    map["script_fields"]={};
+    map["script_fields"][newFieldName] = {
+         "script" : "_source.message ==~ pattern ? (_source.message =~ pattern)[0][1] : ''" ,
+        "params" :{"pattern":regepx}
+    };
+    return map;
+}
+
+topCommand
+	= 'top'_*'('_* field:Groups _* ')' {
+    var map = {};
+
+    map[field]=100;
+    return map;
+}
+
+EvalCommand
+  = 'eval' _ func:EvalFunction {
+    var dsl = {};
+    var _source = {}
+    dsl['script_fields'] = func;
+  	return dsl;
+  }
+
+EvalFunction
+  = field:Field _* "=" _* func:SingleParamFunctionType _* "(" _* expression:EvalExpression _* ")" {
+    var script_fields = {};
+    script_fields[field] = {"lang":"painless","script": func+"("+ expression +")"}
+    return script_fields;
+    }
+  / field:Field _* "=" _* func:PairParamFunctionType _* "(" _* expression1:EvalExpression _* "," _* expression2:EvalExpression _* ")" {
+    var script_fields = {};
+    script_fields[field] = {"lang":"painless","script": func+"("+ expression1 + "," + expression2 +")"}
+    return script_fields;
+    }
+
+EvalExpression
+  = head:EvalTerm tail:(Eval_ ("+" / "-") Eval_ EvalTerm)* {
+      return tail.reduce(function(result, element) {
+        if (element[1] === "+") { return result + "+" + element[3]; }
+        if (element[1] === "-") { return result + "-" + element[3]; }
+      }, head);
+    }
+
+EvalTerm
+  = head:EvalFactor tail:(Eval_ ("*" / "/") Eval_ EvalFactor)* {
+      return tail.reduce(function(result, element) {
+        if (element[1] === "*") { return result + "*" + element[3]; }
+        if (element[1] === "/") { return result + "/" + element[3]; }
+      }, head);
+    }
+
+EvalFactor
+  = operator:"-"? "(" Eval_ expr:EvalExpression Eval_ ")" { return (operator=="-" ? "-":"") + "(" + expr + ")"; }
+  / EvalInteger / operator:"-"? field:$[a-zA-Z0-9\._]+ {return (operator=="-" ? "-":"") + "doc['"+ field +"'].value"}
+
+EvalInteger "integer"
+  = Eval_ "-"? [0-9]+ { return parseInt(text(), 10); }
+
+Eval_ "whitespace"
+  = [ \t\n\r]*
+
+
+CountCommand
+ = 'count()' alias:(AsFunction)* byGroups:(_ 'by' _ Groups)? {
+    var aggs = {};
+    var agg = {};
+    agg["value_count"] = {"field": "_indexName"};
+    function getAlias(func){
+        var alias = null;
+        for(var key in func){
+              alias = func[key]["field"];
+              if(key=="value_count"){
+                    key = "count";
+                    alias = key+"()";
+              }else{
+              		alias = key+"("+alias+")";
+              }
+              break;
+        }
+        return alias;
+     }
+    if (!!byGroups) {
+      var by = byGroups[3];
+      var i = 0;
+      function setTerms(aggs, i) {
+          aggs[by[i]] = {"terms":{"field":by[i],"size":1000},"aggs":{}};
+          if (i < by.length-1) {
+              setTerms(aggs[by[i]].aggs, i+1);
+          } else {
+              if(alias==null||alias==""){
+            	  alias = getAlias(agg);
+                  if(alias=="count(_indexName)"){
+                     alias = "count()";
+                  }
+      		  }
+              aggs[by[i]].aggs[alias] = agg;
+              return;
+          }
+      }
+      setTerms(aggs, i);
+    } else {
+		if(alias==null||alias==""){
+        	alias = getAlias(agg);
+        }
+      	aggs[alias] = agg;
+    }
+    return aggs;
+  }
+
+
+BinCommand
+  = 'bucket' _ field:Field _ 'span' SEP interval:Interval _? '|' _? stats:(StatsCommand / SigTermCommand / PredictCommand) {
+      return {"aggs":{"bucket":{"date_histogram":{"field":field,"interval":interval},"aggs":stats}}};
+  }
+
+Interval
+  = chr:(Integer [smhdwy]) { return chr.join(''); }
+
+PredictCommand
+  = 'predict' _ func:StatsFunction _ 'window' SEP window:Integer settings:(_ AggSettings)* _? {
+    var aggs = {};
+    aggs[0] = func;
+    aggs['predict'] = {"moving_avg":{"bucket_path":"0","window":window,"model": "holt_winters","settings": settings[0][1]}};
+    return aggs;
+  }
+
+// Post-Process Commands
+TransCommand
+  = 'transaction' _ field_list:FieldGroups maxspan:(_ 'maxspan' SEP Integer ('s'/'m'/'h'/'d'))? maxevents:(_ 'maxevents' SEP Integer)? maxopentxn:(_ 'maxopentxn' SEP Integer)? startswith:(_ 'startswith' SEP TransFilterString)? endswith:(_ 'endswith' SEP WildCardValue)? contains:(_ 'contains' SEP WildCardValue)? _? {
+    var topHitsSize = 3;
+    var groupSize = 100;
+    var startsWithChar, endsWithChar, containsChar;
+    var startsWithEval, endsWithEval, containsEval;
+    var num, unit
+    var aggs = {};
+    if (!!maxopentxn) { groupSize = maxopentxn[3] }
+    if (!!maxevents) { topHitsSize = maxevents[3] }
+    if (!!startswith) {
+      if(startswith[3][0] == "eval("){
+          startsWithEval = startswith[3].join("");
+      } else {
+          startsWithChar = startswith[3];
+      }
+    }
+    if (!!endswith) { endsWithChar = endswith[3] }
+    if (!!contains) { containsChar = contains[3] }
+    if (!!maxspan) { num = maxspan[3], unit = maxspan[4]}
+
+    var transHits = {"transHits":{"top_hits":{"sort":TIMESTAMP_FIELD,"size":topHitsSize}}};
+    var i = 0;
+    function setTerms(aggs, i) {
+        if(i == 0){
+            aggs[field_list[i]] = {"terms":{"field":field_list[i],"size":groupSize},"aggs":{}};
+        }else{
+            aggs[field_list[i]] = {"terms":{"field":field_list[i]},"aggs":{}};
+        }
+        if (i < field_list.length-1) {
+            setTerms(aggs[field_list[i]].aggs, i+1);
+        } else {
+            aggs[field_list[i]].aggs = transHits;
+            return;
+        }
+    }
+    setTerms(aggs, i);
+
+    var millisecond;
+    if(unit=="s"){
+        millisecond = num * 1000
+    } else if(unit=="m"){
+        millisecond = num * 60 * 1000
+    } else if(unit=="h"){
+        millisecond = num * 60 * 60 * 1000
+    } else if(unit=="d"){
+        millisecond = num * 24 * 60 * 60 * 1000
+    }
+
+    var postProcess = function(data) {
+        var transHits = [];
+        var jsonObj = JSON.parse(data);
+        var aggregations = jsonObj.aggregations;
+        var i = 0;
+        function getTerms(aggregations, i, values) {
+            var buckets = aggregations[field_list[i]].buckets;
+            if (i < field_list.length-1) {
+                for (var k=0; k<buckets.length; k++) {
+                    var newValues = values.slice(0);
+                    newValues.push(buckets[k].key);
+                    getTerms(buckets[k], i+1, newValues);
+                }
+            } else {
+                for (var k=0; k<buckets.length; k++) {
+                    var newValues = values.slice(0);
+                    newValues.push(buckets[k].key);
+                    var topHits = buckets[k].transHits.hits.hits;
+                    var results = [];
+                    var isContains = false;
+                    for (var i = 0; i < topHits.length; i++) {
+                        var msg = topHits[i]._source[RAW_MESSAGE_FIELD];
+                        if (((!!startsWithChar && msg.indexOf(startsWithChar) == -1)||(!!startsWithEval && eval('(' + startsWithEval + ')'))) && results.length == 0) {
+                            continue;
+                        }
+                        if (!!containsChar && msg.indexOf(containsChar) != -1) {
+                            isContains = true;
+                        }
+                        if (!!endsWithChar && msg.indexOf(endsWithChar) != -1) {
+                            results.push(topHits[i]._source);
+                            break;
+                        }
+                        results.push(topHits[i]._source);
+                    }
+
+                    if (!!endsWithChar && results[results.length-1][RAW_MESSAGE_FIELD].indexOf(endsWithChar) == -1) {
+                        continue
+                    }
+
+                    if (!!containsChar && !isContains) {
+                        continue;
+                    }
+
+                    var count = results.length;
+                    if(count < 1){
+                        continue;
+                    }
+
+                    var startTimestamp = results[0][TIMESTAMP_FIELD];
+                    var endTimestamp = results[results.length-1][TIMESTAMP_FIELD];
+
+                    var duration = Date.parse(endTimestamp) - Date.parse(startTimestamp);
+                    if(!!maxspan && duration > millisecond){
+                        continue;
+                    }
+
+                    transHits.push({
+                        keys : field_list,
+                        values : newValues,
+                        count: count,
+                        duration: duration,
+                        timestamp: startTimestamp,
+                        results: results
+                    });
+                }
+            }
+        }
+        getTerms(aggregations, i, []);
+        return transHits;
+    }
+
+    return [aggs, postProcess];
+  }
+
+TransFilterString
+  = "eval(" _* expression:TransExpression _* ")"
+  / WildCardValue
+
+TransExpression
+  = head:TransTerm tail:(Eval_ ("+" / "-" / "==" / "!=" / ">=" / "<=" / ">" / "<") Eval_ TransTerm)* {
+      return tail.reduce(function(result, element) {
+        if (element[1] === "+") { return result + "+" + element[3]; }
+        if (element[1] === "-") { return result + "-" + element[3]; }
+        if (element[1] === "==") { return result + "==" + element[3]; }
+        if (element[1] === "!=") { return result + "!=" + element[3]; }
+        if (element[1] === ">=") { return result + ">=" + element[3]; }
+        if (element[1] === "<=") { return result + "<=" + element[3]; }
+        if (element[1] === ">") { return result + ">" + element[3]; }
+        if (element[1] === "<") { return result + "<" + element[3]; }
+      }, head);
+    }
+
+TransTerm
+  = head:TransFactor tail:(Eval_ ("*" / "/") Eval_ TransFactor)* {
+      return tail.reduce(function(result, element) {
+        if (element[1] === "*") { return result + "*" + element[3]; }
+        if (element[1] === "/") { return result + "/" + element[3]; }
+      }, head);
+    }
+
+TransFactor
+  = "(" Eval_ expr:TransExpression Eval_ ")" { return "(" + expr + ")"; }
+  / EvalInteger
+  / field:$[a-zA-Z0-9\._]+ {return "topHits[i]._source[\""+ field +"\"]"}
