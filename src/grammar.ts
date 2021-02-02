@@ -151,7 +151,7 @@ export const grammar = `
 // 入口根语法, 全文从这里开始
 start
   // 形式: 查询语句 | 处理过程 | 算子命令 => 查询结果集
-  = query:(query)
+  = space query:(query)
     process:(space pipe space p:(statistic / evaluation) { return p })?
     command:(space pipe space c:command { return c })* space
     { 
