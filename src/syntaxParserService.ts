@@ -22,7 +22,8 @@ export interface ESQuery {
   sort: Sort[] | undefined,
   from: number | undefined,
   size: number | undefined,
-  _source: string[] | undefined
+  _source: string[] | undefined,
+  script_fields?: unknown
 }
 
 /**
@@ -186,6 +187,16 @@ export const DSLRemoveAggs = (dsl: ESQuery): ESQuery => {
  */
 export const DSLRemoveSort = (dsl: ESQuery): ESQuery => {
   dsl.sort = undefined
+
+  return dsl
+}
+
+/**
+ * 从DSL语句中移除script_fields字段
+ * @param dsl 待加工的 DSL 语句
+ */
+export const DSLRemoveScript = (dsl: ESQuery): ESQuery => {
+  dsl['script_fields'] = undefined
 
   return dsl
 }
