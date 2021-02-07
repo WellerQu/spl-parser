@@ -75,7 +75,7 @@ export const grammar = `
       dsl = Object.assign({},
         dsl,
         {'script_fields': {
-        	[evaluation.result + '_' + FIELD_TYPE.number]: {
+        	[evaluation.result]: {
               script: {
                 lang: "painless", // ES 语法解析器, 用解析 script 字段的表达式
                 source: evaluation.script
@@ -341,7 +341,11 @@ term
 factor
   = s:"(" space expr:expression space e:")" { return joinExpr(s,expr,e) }
   / $("-"? numeric)
-  / f:"-"? g:identifier { return joinExpr(f || '', "doc['", g, "_", FIELD_TYPE.number, "'].value") }
+  / f:"-"? g:identifier {
+    const fieldName = g.indexOf("_") === 0 ? g : (g + "_" + FIELD_TYPE.number)
+
+    return joinExpr(f || '', "doc['", fieldName, "'].value") 
+  }
 
   
 // #endregion
