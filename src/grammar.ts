@@ -112,7 +112,7 @@ export const grammar = `
       }, null)
       
       const aggregateField = [statistic.field, statistic.aggr === 'count' ? FIELD_TYPE.string : FIELD_TYPE.number]
-      const groupByFields = fields.map(([,item]) => [item, FIELD_TYPE.string])
+      const groupByFields = fields.map(([,item]) => [item, FIELD_TYPE.string, ['stats group']])
       
       dsl.fields.push(aggregateField, ...groupByFields)
       
