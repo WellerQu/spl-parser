@@ -110,7 +110,7 @@ export const DSLTypeMapping = (dsl: ESQuery): ESQuery => {
   const factor = (dsl.fields ?? [])
     .filter(([, type]) => type !== FieldValueType.keyword)
     .filter(([fieldName]) => !fieldName.startsWith('_'))
-    .map((field) => r(...field))
+    .map((field) => r(...field as [string, FieldValueType]))
   const replace = compose(...reverse(factor))
   const origin = dsl.query['query_string'].query
 
