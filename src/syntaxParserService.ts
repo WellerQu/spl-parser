@@ -10,7 +10,7 @@ interface Sort {
 }
 
 export interface ESQuery {
-  fields: [string, FieldValueType][] | undefined
+  fields: ([string, FieldValueType] | [string, FieldValueType, string[]])[] | undefined
   // 查询语句
   query: {
     // NOTE: ES DSL 要求的命名风格
