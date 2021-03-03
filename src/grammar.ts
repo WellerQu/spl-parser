@@ -188,7 +188,7 @@ fieldSearch
   
 // 正则表达式搜索
 reSearch
-  = k:identifier space '=' space slash wildcard slash { return [k, FIELD_TYPE.string] }
+  = k:identifier space '=' space slash [^/]* slash { return [k, FIELD_TYPE.string] }
   
 // 模糊检索(暂时停用)
 fuzzySearch
