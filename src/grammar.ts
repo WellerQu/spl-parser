@@ -186,6 +186,9 @@ fieldSearch
   / k:identifier space '=' space doubleQuote [^"]* doubleQuote { return [k, FIELD_TYPE.string] }
   / k:identifier space '=' space wildcard { return [k, FIELD_TYPE.string] }
   
+// 正则表达式搜索
+reSearch
+  = k:identifier space '=' space slash wildcard slash { return [k, FIELD_TYPE.string] }
   
 // 模糊检索(暂时停用)
 fuzzySearch
@@ -193,15 +196,16 @@ fuzzySearch
 
 // 范围检索
 rangeSearch
-  = k:identifier '=' openIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric openIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
-  / k:identifier '=' closeIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric closeIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
-  / k:identifier '=' openIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric closeIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
-  / k:identifier '=' closeIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric openIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
+  = k:identifier space '=' space openIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric openIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
+  / k:identifier space '=' space closeIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric closeIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
+  / k:identifier space '=' space openIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric closeIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
+  / k:identifier space '=' space closeIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric openIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
 
 // key-value 检索
 keyValueSearch
   // = f:fuzzySearch { return extractFieldNameAndType(f) } // 暂时停用模糊查询
   = f:rangeSearch { return extractFieldNameAndType(f) }
+  / f:reSearch { return extractFieldNameAndType(f) }
   / f:fieldSearch { return extractFieldNameAndType(f) }
   
 // #endregion
@@ -253,6 +257,9 @@ bracketStart
   
 bracketEnd
   = ")"
+  
+slash
+  = "/"
 
 // 管道符
 pipe
