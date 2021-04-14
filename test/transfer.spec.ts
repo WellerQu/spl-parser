@@ -1,92 +1,137 @@
 /// <reference types="../typings" />
 
 import { parse } from '../src/parser'
+import { transfer } from '../src'
 
 describe("全文检索", () => {
   it("error", () => {
-    parse(`error`)
+    const dsl = transfer(`error`)
+    expect(dsl.query.query_string.query).toBe("error")
   })
 
   it("error exception", () => {
-    parse(`error OR exception`)
+    const dsl = transfer(`error OR  exception`)
+    expect(dsl.query.query_string.query).toBe("error OR exception")
   })
 
   it("\"error is\"", () => {
-    parse(`"error is"`)
+    const dsl = transfer(`"error is"`)
+    expect(dsl.query.query_string.query).toBe(`"error is"`)
   })
 
   it("中文", () => {
-    parse(`中文`)
+    const dsl = transfer(`中文`)
+    expect(dsl.query.query_string.query).toBe(`中文`)
   })
 
   it("特殊符号", () => {
-    parse(`@_?*.`)
+    const dsl = transfer(`@_?*.`)
+    expect(dsl.query.query_string.query).toBe(`@_?*.`)
   })
 })
 
 describe("字段检索", () => {
   it("字段host中包含localhost的日志", () => {
-    parse(`host=localhost`)
-    parse(`host="localhost"`)
+    {
+      const dsl = transfer(`host=localhost`)
+      expect(dsl.query.query_string.query).toBe(`host="localhost"`)
+    }
+
+    {
+      const dsl = transfer(`host="localhost"`)
+      expect(dsl.query.query_string.query).toBe(`host="localhost"`)
+    }
   })
 
   it("字段type中匹配词组online offline的⽇志", () => {
-    parse(`type="online offline"`)
+    const dsl = transfer(`type="online offline"`)
+    expect(dsl.query.query_string.query).toBe(`type="online offline"`)
   })
 
   it("存在字段type的⽇志", () => {
-    parse(`_exists_=type`)
-    parse(`_exists_="type"`)
+    {
+      const dsl = transfer(`_exists_=type`)
+      expect(dsl.query.query_string.query).toBe(`_exists_="type"`)
+    }
+
+    {
+      const dsl = transfer(`_exists_="type"`)
+      expect(dsl.query.query_string.query).toBe(`_exists_="type"`)
+    }
   })
 
   it("正则检索", () => {
-    parse(`host=/host/`)
+    const dsl = transfer(`host=/host/`)
+    expect(dsl.query.query_string.query).toBe(`host=/host/`)
   })
 })
 
 describe("OR, AND, NOT", () => {
   it("OR连接", () => {
-    parse(`type="online offline" OR _exists_="type"`)
+    const dsl = transfer(`type="online offline" OR _exists_="type"`)
+    expect(dsl.query.query_string.query).toBe(`type="online offline" OR _exists_="type"`)
   })
 
   it("AND连接", () => {
-    parse(`type="online offline" AND _exists_="type"`)
+    const dsl = transfer(`type="online offline" AND _exists_="type"`)
+    expect(dsl.query.query_string.query).toBe(`type="online offline" AND _exists_="type"`)
   })
 
   it("NOT连接", () => {
-    parse(`type="online offline" OR NOT host="local?ost"`)
+    const dsl = transfer(`type="online offline" OR NOT host="local?ost"`)
+    expect(dsl.query.query_string.query).toBe(`type="online offline" OR NOT host="local?ost"`)
   })
 })
 
 describe("通配符", () => { 
   it("通配符 * 表示0个或多个字符", () => {
-    parse(`type=*line*`)
+    const dsl = transfer(`type=*line*`)
+    expect(dsl.query.query_string.query).toBe(`type="*line*"`)
   })
 
   it("使用通配符 ? 来代替⼀个字符", () => {
-    parse(`host=local?ost`)
+    const dsl = transfer(`host=local?ost`)
+    expect(dsl.query.query_string.query).toBe(`host="local?ost"`)
   })
 })
 
 describe("数字字段⽀持范围查询", () => {
   it("⽅括号中的范围是闭区间", () => {
-    parse(`grade=[50 TO 80]`)
+    const dsl = transfer(`grade=[50 TO 80]`)
+    expect(dsl.query.query_string.query).toBe(`grade=[50 TO 80]`)
   })
 
   it("花括号中的范围是开区间", () => {
-    parse(`grade={30 TO 60}`)
+    const dsl = transfer(`grade={ 30  TO   60 }`)
+    expect(dsl.query.query_string.query).toBe(`grade={30 TO 60}`)
   })
 
   it("⽅括号，花括号组合使⽤", () => {
-    parse(`grade=[50 TO 80}`)
-    parse(`grade={50 TO 80]`)
+    { 
+      const dsl = transfer(`grade=[50 TO 80}`)
+      expect(dsl.query.query_string.query).toBe(`grade=[50 TO 80}`)
+    }
+
+    { 
+      const dsl = transfer(`grade={50 TO 80]`)
+      expect(dsl.query.query_string.query).toBe(`grade={50 TO 80]`)
+    }
   })
 })
 
 describe("高级查询", () => {
   describe("stats统计", () => {
-    it("count: 统计数量", () => {
-      parse(`* | stats count(fieldName)`)
+    it.skip("count: 统计数量", () => {
+      const dsl = transfer(`* | stats count(fieldName)`)
+      expect(dsl.aggs).not.toBeUndefined()
+      expect(dsl.aggs).toEqual({
+        "count(fieldName)": {
+          "terms": {
+            "field": "fieldName_string",
+            "size": 10000
+          }
+        }
+      })
     })
 
     it("min: 统计最⼩值", () => {
@@ -114,7 +159,7 @@ describe("高级查询", () => {
     })
 
     it("综合", () => {
-      parse(`* | stats count(fieldName) as ce by fuck,the,world`)
+      parse(`* | stats count(fieldName) as ce by hello,world`)
     })
   })
 

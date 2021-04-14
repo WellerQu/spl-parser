@@ -8,21 +8,14 @@ export const grammar = `
  */
 
 /**
- * 解释查询语句的语法定义, 更多信息参见:
- * [PEGJS](https://pegjs.org/)
- *
- * @Author: Qiuwei
- * @since: 2020年11月17日
- */
-
-/**
  * 生成Ast的辅助函数
  */
 {
-const astNode = (type, value, decorator) => ({ type, value, decorator })
+const conditionNode = (type, value, decorator) => ({ type, value, decorator })
+const statsNode = (type, value) => ({ type, value })
+const evalNode = (type, value) => ({ type, value })
 const kvNode = (type, value) => ({ type, value })
 const cmdNode = (type, value) => ({ type, value })
-const statsFieldNode = (name, filters) => ({})
 }
 
 /*
@@ -81,8 +74,8 @@ Condition = decorator:(not:NOT Space+ { return not })? node:(
  * 关键词
  */
 Keyword =
-  singleKeyword:Identifier { return astNode('Keyword', singleKeyword, []) }
-  / Quote unionKeyword:QuoteStr Quote { return astNode('Keyword', unionKeyword, []) }
+  singleKeyword:Identifier { return conditionNode('SingleKeyword', singleKeyword, []) }
+  / Quote unionKeyword:QuoteStr Quote { return conditionNode('UnionKeywords', unionKeyword, []) }
 
 /**
  * 键值对
@@ -90,18 +83,18 @@ Keyword =
 KeyValue =
   fieldName:FieldName
   Space* "=" Space*
-  value:(
+  fieldValue:(
     Quote value:QuoteStr Quote { return kvNode("string", value) }
     / RegExp value:RegExpStr RegExp { return kvNode("regexp", value) }
     / value:RangeValue { return kvNode("range", value) }
     / value:Identifier { return kvNode("string", value) }
-  ) { return astNode('KeyValue', { fieldName, value }, []) }
-  
+  ) { return conditionNode('KeyValue', { fieldName, fieldValue }, []) }
+
 /**
  * 数字范围描述
  */
 RangeValue =
-  left:("["/"{") Space* value1:Num Space+ "TO" Space+ value2:Num Space* right:("]"/"}") { return { from: {decorator: left, value: value1}, to: {decorator: right, value: value2} } }
+  left:("["/"{") Space* value1:Num Space+ "TO" Space+ value2:Num Space* right:("]"/"}") { return left + value1 + " TO " + value2 + right }
 
 /**
  * 特殊键值对
@@ -111,12 +104,12 @@ _Exist_ =
   value:(
     Quote str:QuoteStr Quote { return kvNode("string", str) }
     / str:Identifier { return kvNode("string", str) }
-  ) { return astNode('_exists_', value, []) }
+  ) { return conditionNode('KeyValue', { fieldName: "_exists_", fieldValue:value }, []) }
 
 /**
  * 联合多个条件作为一个条件, 可以嵌套
  */
-Union = "(" Space* SPL:SPL Space* ")" { return astNode('Union', SPL, []) }
+Union = "(" Space* SPL:SPL Space* ")" { return conditionNode('Union', SPL, []) }
 // -------------------------------------- 查询结束 --------------------------------------
 
 // -------------------------------------- 统计开始 --------------------------------------
@@ -127,13 +120,13 @@ Statistic =
   Stats Space+ aggr:(Count/Min/Max/Sum/Avg/DC) Space* "(" Space* field:StatsField moreFields:(Space* "," Space* next:StatsField)* Space* ")"
   alias:StatsAs?
   groupBy:StatsBy?
-  afterFilters:StatsAfterFilter? { return astNode("stats", {aggr, fields: [field, ...moreFields], alias, groupBy, filters: afterFilters}, []) }
+  afterFilters:StatsAfterFilter? { return statsNode("stats", {aggr, fields: [field, ...moreFields], alias, groupBy, filters: afterFilters}) }
 
 /**
  * 统计的聚合字段
  */
 StatsField =
-  field:FieldName filter:StatsBeforeFilter? { return { field, filter } }
+  field:FieldName filter:StatsBeforeFilter? { return { fieldName: field, filter } }
 
 /**
  * 统计聚合字段的别名
@@ -157,7 +150,7 @@ StatsBucketSortLimit =
   )? { return {field, sortLimits} }
 
 StatsBeforeFilter =
-  "[" Space* FilterF Space+ name:FieldName Space* "=" Space* value:Identifier Space* "]" { return {name, value} }
+  "[" Space* FilterF Space+ name:FieldName Space* "=" Space* value:Identifier Space* "]" { return {fieldName: name, fieldValue:value} }
 
 StatsAfterFilter =
   Space* Pipe Space* FilterF Space+ item:MetricFuncExpr moreItems:(Space* "," Space* next:MetricFuncExpr { return next })* { return [item, ...moreItems] }
@@ -170,7 +163,7 @@ MetricFuncExpr =
 /**
  */
 Evaluation =
-  Eval Space+ newName:FieldName Space* "=" Space* base:(Unary/Binary) { return astNode("eval", {...base}) }
+  Eval Space+ newName:FieldName Space* "=" Space* base:(Unary/Binary) { return evalNode("eval", {...base}) }
 
 /**
  * 一元操作
