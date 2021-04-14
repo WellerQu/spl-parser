@@ -7,374 +7,291 @@ export const grammar = `
  * @since: 2020年11月17日
  */
 
+/**
+ * 解释查询语句的语法定义, 更多信息参见:
+ * [PEGJS](https://pegjs.org/)
+ *
+ * @Author: Qiuwei
+ * @since: 2020年11月17日
+ */
+
+/**
+ * 生成Ast的辅助函数
+ */
 {
-  // s -> s
-  const toUpperCase = s => s.toUpperCase()
-  // p -> [a,b] -> 'apb'
-  const join = p => (...s) => s.join(p)
-  
-  // 组合参数列表
-  const joinParams = join(',')
-  // 组合表达式
-  const joinExpr = join('')
-  // 组合表达式调用
-  const joinCall = (fn,...params) => joinExpr(fn, '(', joinParams(...params), ')')
-  
-  // 将多维数组降低 level 个维度
-  // [a] -> a
-  const flat = (level = 1) => s => s.flat(level)
-  
-  // 将多维数组降低一个维度
-  const flatOne = flat(1)
-  
-  // 从数组 m 中提取特定 p 的列(索引从0开始)
-  // p -> m -> m[p]
-  const extract = p => m => m[p]
-  
-  // 丢弃的值
-  const DISCARD_VALUE = undefined
-  // 默认的字段
-  const DEFAULT_FIELD = '_message'
-  
-  // 字段名索引
-  const FIELD_NAME_INDEX = 0
-  const FIELD_TYPE_INDEX = 1
-  // 提取字段名
-  const extractFieldNameAndType = t => [FIELD_NAME_INDEX, FIELD_TYPE_INDEX].map(f => extract(f)).map(f => f(t))
-  
-  // 判断是否是空值
-  const isEmpty = s => s === undefined || s === null
-  
-  // 最大读取条数
-  const MAX_RECORD = 10000
-  
-  // 字段类型
-  const FIELD_TYPE = {
-    number: 'number',
-    string: 'string',
-  }
-  
-  // 将 start 根语法产生的中间语言 intermediate 转换成 ES 的 Query DSL
-  const toESQueryDSL = (intermediate) => {
-    const [fields = [], process, commands] = intermediate
-  	let dsl = {
-      fields: fields
-      	.filter(item => !!item)
-      	.filter(item => item[0] !== '*'),
-      query: {
-        'query_string': {
-          'query': '',
-          'default_field': DEFAULT_FIELD
-        },
-      },
-      _source: []
-    }
-    
-    if (process.evaluation) {
-      const evaluation = process.evaluation
-      dsl = Object.assign({},
-        dsl,
-        {'script_fields': {
-        	[evaluation.result]: {
-              script: {
-                lang: "painless", // ES 语法解析器, 用解析 script 字段的表达式
-                source: evaluation.script
-              }
-            }
-        }
-      })
-    }
-    
-    if (process.statistic) {
-      const MAX_SIZE = 10000
-      const statistic = process.statistic
-      const fields = (statistic.groupBy || [])
-      const aggs = fields.concat([[statistic.alias , statistic.field, statistic.fieldType, statistic.aggr]]).reduceRight((acc, [alias, field, fieldType, fn]) => {
-        const terms = Object.assign(
-          { field: field.indexOf('_') === 0 ? field : (joinExpr(field, '_', fieldType)) }, 
-          fn === 'count' ? { size: MAX_SIZE } : {}
-        )
-        const name = fn === 'count' ? 'terms' : fn
-        const node = alias || joinCall(fn, field)
-        
-      	const aggr = {
-          [node]: {
-            [name]: terms
-          }
-        }
-        
-        if (acc) {
-          aggr[node].aggs = acc
-          terms.size = MAX_SIZE
-        }
-        
-        return aggr
-      }, null)
-      
-      const aggregateField = [statistic.field, statistic.aggr === 'count' ? FIELD_TYPE.string : FIELD_TYPE.number]
-      const groupByFields = fields.map(([,item]) => [item, FIELD_TYPE.string, ['stats group']])
-      
-      dsl.fields.push(aggregateField, ...groupByFields)
-      
-      dsl = Object.assign({}, dsl, {aggs: aggs})
-    }
-    
-    dsl = commands.reduce((acc, cmd) => {
-      if (!isEmpty(cmd['limit'])) {
-        const limit = cmd['limit']
-        if (limit > MAX_RECORD) {
-          // 最大值不能超过 MAX_RECORD
-          throw new Error('limit max is 10000')
-        }
-        
-        acc.from = 0
-        acc.size = limit
-      }
-      if (!isEmpty(cmd['sortBy'])) {
-        acc.sort = cmd['sortBy'].map(([field, order]) => ({
-        	[field + '_' + FIELD_TYPE.string]: { order, unmapped_type: FIELD_TYPE.string }
-        }))
-      }
-      if (!isEmpty(cmd['fields'])) {
-        acc._source = cmd['fields']
-      }
-      return acc
-    }, dsl)
-    
-    /*
-    return intermediate
-    //*/
-    return dsl //intermediate
-  }
+const astNode = (type, value, decorator) => ({ type, value, decorator })
+const kvNode = (type, value) => ({ type, value })
+const cmdNode = (type, value) => ({ type, value })
+const statsFieldNode = (name, filters) => ({})
 }
 
-// 入口根语法, 全文从这里开始
-start
-  // 形式: 查询语句 | 处理过程 | 算子命令 => 查询结果集
-  = space query:(query)
-    process:(space pipe space p:(statistic / evaluation) { return p })?
-    command:(space pipe space c:command { return c })* space
-    { 
-      return toESQueryDSL([query, process || {}, command || []])
-    }
-    
+/*
+1. 语句中正确部分的SPL转译为DSL
+2. 将错误输入转换为提示
+4. 语句中的字段添加类型映射
+5. 识别出语句中的关键词和基于操作符的数据类型 (当前版本未实现)
+3. 将可能输入转换为提示
+    - 符号提示
+    - 字段提示
+    - 字段值提示(当前版本未实现)
+*/
 
-// 联合查询
-query
-  = bracketStart space m:query space bracketEnd n:((requiredSpace connector)? requiredSpace q:query { return q })? { return n ? m.concat(n) : m }
-  / m:keyValueSearch n:((requiredSpace connector)? requiredSpace q:query { return q })? { return n ? [m].concat(n) : [m] }
-  / m:fullTextSearch n:((requiredSpace connector)? requiredSpace q:query { return q })? { return n ? [m].concat(n) : [m] } 
+/**
+ * SPL 主要语法结构
+ */
+SPL = Query Operation* UniversalCommands*
+
+/**
+ * 对查询结果进行特殊操作
+ */
+Operation = Space* Pipe Space* operation:(Statistic/Evaluation) { return operation }
+
+/**
+ * 对查询结果进行通用操作
+ */
+UniversalCommands = Space* Pipe Space* command:(Sort/Top/Rare/Head/Tail/Limit/Fields/Table/Transaction) { return command }
+
+// -------------------------------------- 查询开始 --------------------------------------
+/**
+ * 查询
+ * 查询由多个条件组构成, 组之间以OR连接
+ */
+Query =
+  group:ConditionGroup moreGroups:(Space+ OR Space+ next:ConditionGroup { return next })* { return { groups: [group, ...moreGroups] } }
+
+/**
+ * 条件组
+ * 条件组由多个条件构成, 条件间以AND连接
+ */
+ConditionGroup =
+  condition:Condition moreConditions:(Space+ AND Space+ next:Condition { return next })*  { return { conditions: [condition, ...moreConditions] } }
+
+/**
+ * 条件
+ * 条件的形式有: 联合条件, 键值对, 关键词(全文检索)
+ */
+Condition = decorator:(not:NOT Space+ { return not })? node:(
+  Union
+  / _Exist_
+  / KeyValue
+  / Keyword
+) { return {...node, decorator: decorator ? [...node.decorator, decorator] : node.decorator } }
+
+/**
+ * 关键词
+ */
+Keyword =
+  singleKeyword:Identifier { return astNode('Keyword', singleKeyword, []) }
+  / Quote unionKeyword:QuoteStr Quote { return astNode('Keyword', unionKeyword, []) }
+
+/**
+ * 键值对
+ */
+KeyValue =
+  fieldName:FieldName
+  Space* "=" Space*
+  value:(
+    Quote value:QuoteStr Quote { return kvNode("string", value) }
+    / RegExp value:RegExpStr RegExp { return kvNode("regexp", value) }
+    / value:RangeValue { return kvNode("range", value) }
+    / value:Identifier { return kvNode("string", value) }
+  ) { return astNode('KeyValue', { fieldName, value }, []) }
   
+/**
+ * 数字范围描述
+ */
+RangeValue =
+  left:("["/"{") Space* value1:Num Space+ "TO" Space+ value2:Num Space* right:("]"/"}") { return { from: {decorator: left, value: value1}, to: {decorator: right, value: value2} } }
 
-// 算子命令
-command
-  = limitCommand
-  / sortCommand 
-  / fieldCommand
-  // 在此新增算子命令
+/**
+ * 特殊键值对
+ */
+_Exist_ =
+  "_exists_" Space* "=" Space*
+  value:(
+    Quote str:QuoteStr Quote { return kvNode("string", str) }
+    / str:Identifier { return kvNode("string", str) }
+  ) { return astNode('_exists_', value, []) }
 
+/**
+ * 联合多个条件作为一个条件, 可以嵌套
+ */
+Union = "(" Space* SPL:SPL Space* ")" { return astNode('Union', SPL, []) }
+// -------------------------------------- 查询结束 --------------------------------------
 
-// #region 定义语法
-// 全文检索
-fullTextSearch
-  = k:identifier { return [k, 'keyword'] }
-  / k:(doubleQuote k:$((space? identifier)+ space) doubleQuote { return k }) { return [k, 'keyword'] }
-  
-// 字段检索
-fieldSearch
-  = k:'_exists_' space '=' space doubleQuote [^"]* doubleQuote {return ([k, FIELD_TYPE.string])}
-  / k:identifier space '=' space doubleQuote [^"]* doubleQuote { return [k, FIELD_TYPE.string] }
-  / k:identifier space '=' space wildcard { return [k, FIELD_TYPE.string] }
-  
-// 正则表达式搜索
-reSearch
-  = k:identifier space '=' space slash [^/]* slash { return [k, FIELD_TYPE.string] }
-  
-// 模糊检索(暂时停用)
-fuzzySearch
-  = f:fieldSearch d:DLSFactor { return [...f, d] }
+// -------------------------------------- 统计开始 --------------------------------------
+/**
+ * 统计主体
+ */
+Statistic =
+  Stats Space+ aggr:(Count/Min/Max/Sum/Avg/DC) Space* "(" Space* field:StatsField moreFields:(Space* "," Space* next:StatsField)* Space* ")"
+  alias:StatsAs?
+  groupBy:StatsBy?
+  afterFilters:StatsAfterFilter? { return astNode("stats", {aggr, fields: [field, ...moreFields], alias, groupBy, filters: afterFilters}, []) }
 
-// 范围检索
-rangeSearch
-  = k:identifier space '=' space openIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric openIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
-  / k:identifier space '=' space closeIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric closeIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
-  / k:identifier space '=' space openIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric closeIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
-  / k:identifier space '=' space closeIntervalStart f:numeric requiredSpace 'TO' requiredSpace t:numeric openIntervalEnd { return [k, FIELD_TYPE.number, f, t]}
+/**
+ * 统计的聚合字段
+ */
+StatsField =
+  field:FieldName filter:StatsBeforeFilter? { return { field, filter } }
 
-// key-value 检索
-keyValueSearch
-  // = f:fuzzySearch { return extractFieldNameAndType(f) } // 暂时停用模糊查询
-  = f:rangeSearch { return extractFieldNameAndType(f) }
-  / f:reSearch { return extractFieldNameAndType(f) }
-  / f:fieldSearch { return extractFieldNameAndType(f) }
-  
-// #endregion
+/**
+ * 统计聚合字段的别名
+ */
+StatsAs =
+  Space+ As Space+
+  name:FieldName { return name }
 
+/**
+ * 统计的维度字段
+ */
+StatsBy =
+  Space+ By Space+
+  field:StatsBucketSortLimit
+  moreFields:(Space* "," Space* next:StatsBucketSortLimit { return next })* { return [field, ...moreFields] }
 
+StatsBucketSortLimit =
+  field:FieldName
+  sortLimits:(
+    Space* "[" Space* SortBy Space+ fn:Identifier Space* "," Space* sn:Integer Space* "]" { return {fn, sn} }
+  )? { return {field, sortLimits} }
 
-// region 定义词法
-// 标识符, 当做字段名处理
-identifier
-  = $([.0-9a-zA-Z\u4e00-\uffff_@]+)
-  / '*'
-  
-// 通配符, 当做字段值处理
-wildcard
-  = $([0-9a-zA-Z\u4e00-\uffff._*?@-]+)
+StatsBeforeFilter =
+  "[" Space* FilterF Space+ name:FieldName Space* "=" Space* value:Identifier Space* "]" { return {name, value} }
 
-// 0和正数(包括浮点数)
-numeric
-  = $([0-9]+([.][0-9]+)?)
-  
-// 任意个数的空格
-space
-  = ' '*
-  
-// 至少一个空格
-requiredSpace
-  = ' '+
+StatsAfterFilter =
+  Space* Pipe Space* FilterF Space+ item:MetricFuncExpr moreItems:(Space* "," Space* next:MetricFuncExpr { return next })* { return [item, ...moreItems] }
 
-singleQuote
-  = "'"
+MetricFuncExpr =
+  $(FieldName Space* ("="/">"/"<") Space* Num)
+// -------------------------------------- 统计结束 --------------------------------------
 
-doubleQuote
-  = '"'
+// -------------------------------------- 计算开始 --------------------------------------
+/**
+ */
+Evaluation =
+  Eval Space+ newName:FieldName Space* "=" Space* base:(Unary/Binary) { return astNode("eval", {...base}) }
 
-openIntervalStart
-  = "{"
+/**
+ * 一元操作
+ */
+Unary =
+  fn:(Ceil/Floor/Abs) Space* "(" param:$(Expr) ")" { return { fn, params: [param]} }
 
-openIntervalEnd
-  = "}"
+/**
+ * 二元操作
+ */
+Binary =
+  fn:(Max/Min) Space* "(" Space* param1:$(Expr) Space* "," Space* param2:$(Expr) Space* ")" { return { fn, params: [param1, param2]} }
 
-closeIntervalStart
-  = "["
+/**
+ * 四则运算
+ */
+Expr =
+  Term (Space* ("+"/"-") Space* Term)*
+Term =
+  Factor (Space* ("*"/"/") Space* Factor)*
+Factor =
+  "(" Space* Expr Space* ")"
+  / Num
+  / FieldName
+// -------------------------------------- 计算结束 --------------------------------------
 
-closeIntervalEnd
-  = "]"
-  
-bracketStart
-  = "("
-  
-bracketEnd
-  = ")"
-  
-slash
-  = "/"
+// -------------------------------------- 命令开始 --------------------------------------
+/**
+ * 排序命令
+ */
+Sort =
+  SortBy Space+
+  name:SortField
+  moreNames:(Space* "," Space* next:SortField { return next })* { return cmdNode("sort", [name, ...moreNames]) }
 
-// 管道符
-pipe
-  = "|"
+SortField =
+  name:FieldName
+  order:("-"/"+")? { return { name, order } }
 
-// 逻辑连接符
-connector
-  = c:'AND'i { return toUpperCase(c) }
-  / c:'OR'i { return toUpperCase(c) }
-  / c:'NOT'i { return toUpperCase(c) }
-  
-// Damerau-Levenshtein
-DLSFactor
-  = '~' dls:$([0-9]*) {return dls === '' ? '2' : dls} // 默认长度为2
-  
-// #endregion
-  
-// #region 统计
-statistic
-  // 关键词
-  = 'stats' requiredSpace 
-  // 聚合函数
-  aggr:aggregateFunc space 
-  // ( 字段名 )
-  bracketStart space field:identifier space bracketEnd space
-   // 别名
-  alias:('as' requiredSpace a:identifier { return a })? space
-  // 分组字段
-  gbf:('by' space groupField:identifier rest:(',' space r:identifier {return r} )* { return { groupBy: [groupField, ...rest]} })? 
-  {
-    const groupBy = gbf ? gbf.groupBy : []
-    return {
-      statistic: {
-        aggr,
-        alias,
-        field,
-        fieldType: aggr === 'count' ? FIELD_TYPE.string : FIELD_TYPE.number,
-        groupBy: groupBy.map(item => [item, item, FIELD_TYPE.string, 'terms']) // alias, fieldName, fieldType, fn
-      }
-    }
-  }
+/**
+ * 限制返回数据条数命令
+ */
+Limit =
+  LimitN Space+ n:$([0-9]+) { return cmdNode("limit", n) }
 
-aggregateFunc
-  = 'count' / 'min' / 'max' / 'avg' / 'sum'
-// #endregion
+Head =
+  HeadN Space+ n:$([0-9]+) { return cmdNode("head", n) }
 
-// #region evaluation
-evaluation
-  = 'eval' requiredSpace f:identifier space '=' space script:evaluationFuncCall space 
-  {
-    return {
-      evaluation: {
-      	result: f,
-        script
-      }
-    }
-  }
-  
-evaluationFuncCall
-  = fn:('min'   { return 'Math.min' })     space bracketStart space p1:expression space ',' space p2:expression bracketEnd {
-      return joinCall(fn, p1, p2)
-    }
-  / fn:('max'   { return 'Math.max' })     space bracketStart space p1:expression space ',' space p2:expression space bracketEnd {
-      return joinCall(fn, p1 ,p2)
-    }
-  / fn:('abs'   { return 'Math.abs' })     space bracketStart space p1:expression space bracketEnd {
-      return joinCall(fn, p1)
-    }
-  / fn:('ceil'  { return 'Math.ceil' })    space bracketStart space p1:expression space bracketEnd {
-      return joinCall(fn, p1)
-    }
-  / fn:('floor' { return 'Math.floor' })   space bracketStart space p1:expression space bracketEnd {
-      return joinCall(fn, p1)
-    }
-  
-expression
-  = head:term tail:(space f:("+" / "-") space g:term { return [f, g] })* {
-      return tail.reduce((result, elements) => joinExpr(result, ...elements), head)
-    }
+Tail =
+  TailN Space+ n:$([0-9]+) { return cmdNode("tail", n) }
 
-term
-  = head:factor tail:(space f:("*" / "/") space g:factor { return [f, g]})* {
-      return tail.reduce((result, elements) => joinExpr(result, ...elements), head)
-    }
+Top =
+  TopNF Space+ n:$([0-9]+) Space+ field:FieldName { return cmdNode("top", [n, field]) }
 
-factor
-  = s:"(" space expr:expression space e:")" { return joinExpr(s,expr,e) }
-  / $("-"? numeric)
-  / f:"-"? g:identifier {
-    const fieldName = g.indexOf("_") === 0 ? g : (g + "_" + FIELD_TYPE.number)
+Rare =
+  RareNF Space+ n:$([0-9]+) Space+ field:FieldName { return cmdNode("rare", [n, field]) }
 
-    return joinExpr(f || '', "doc['", fieldName, "'].value") 
-  }
+/**
+ * 限制返回数据字段命令
+ */
+Fields =
+  FieldsF Space* "[" Space* name:FieldName moreNames:(Space* "," Space* next:FieldName { return next })* Space* "]" { return cmdNode("fields", [name, ...moreNames]) }
 
-  
-// #endregion
+Table =
+  TableF Space+ name:FieldName moreNames:(Space* "," Space* next:FieldName { return next })* { return cmdNode("table", [name, ...moreNames]) }
 
-// #region 算子
-// 排序
-sortCommand
-  = 'sort by' requiredSpace field:sortable rest:(',' space f:sortable { return f})* {return { sortBy: [field, ...rest]} }
+/**
+ * 配置事务
+ * maxopentxn 最大事务数量
+ * maxopenevents 最大事务日志条数
+ */
+Transaction =
+  TransactionF Space+
+  name:FieldName
+  options:(
+    maxopentxn:(Space+ "maxopentxn" Space* "=" Space* value:Integer { return value })
+    maxopenevents:(Space+ "maxopenevents" Space* "=" Space* value:Integer { return value })? { return { maxopentxn, maxopenevents } }
+    /
+    maxopenevents:(Space+ "maxopenevents" Space* "=" Space* value:Integer { return value })
+    maxopentxn:(Space+ "maxopentxn" Space* "=" Space* value:Integer { return value })? { return { maxopentxn, maxopenevents } }
+  )? { return cmdNode("transaction", {name, options}) }
+// -------------------------------------- 命令结束 --------------------------------------
 
-sortable
-  = f:identifier s:('+' { return 'asc' } /'-' { return 'desc' })? { return [f, s || 'desc'] }
-// 限制返回结果的条数
-limitCommand
-  = 'limit' requiredSpace n:numeric { return { limit: +n } }
-  
-// Fields 算子
-fieldCommand
-  = 'fields' requiredSpace 
-      closeIntervalStart space 
-      groupField:identifier rest:(',' space r:identifier {return r})*
-      space closeIntervalEnd { 
-        return {fields: [groupField, ...rest]}
-      }
-// #endregion
+/**
+ * 词法
+ */
+Space "Space" = [ \r\n\t]
+AND = "AND"
+OR = "OR"
+NOT = "NOT"
+Count = "count"
+Min = "min"
+Max = "max"
+Avg = "avg"
+Sum = "sum"
+DC = "dc"
+Ceil = "ceil"
+Floor = "floor"
+Abs = "abs"
+Eval = "eval"
+LimitN = "limit"
+HeadN = "head"
+TailN = "tail"
+TopNF = "top"
+RareNF = "rare"
+FilterF = "filter"
+FieldsF = "fields"
+TableF = "table"
+TransactionF = "transaction"
+SortBy = "sort by"
+By = "by"
+As = "as"
+Stats = "stats"
+Pipe = "|"
+Quote "双引号" = '"'
+QuoteStr = $([^"]*)
+RegExp = "/"
+RegExpStr = $([^/]+)
+Num = $(Integer ("." Integer)?)
+Integer = $([0-9]+)
+FieldName "字段名称" = $([a-zA-Z@]+[a-zA-Z0-9]*)
+Identifier "通用标识符" = $([.0-9a-zA-Z\u4e00-\uffff_@?*]+)
+
 `
