@@ -1,14 +1,19 @@
 import { pipe } from './utils/pipe'
 
+type Resolver = (ast: Ast) => (dsl: ESQuery) => ESQuery
+
 const AGGR_MAX_SIZE = 10000
+
+/**
+ * log事件时间字段名
+ */
+const EVENT_TIME = '_event_time'
 
 export function transpiler(ast: Ast): ESQuery {
   const resolve = pipe(
     resolveQuery(ast),
-    resolveSort(ast),
-    resolveAggr(ast),
-    resolveSource(ast),
-    resolveScriptFields(ast)
+    resolveOperation(ast),
+    resolveCommand(ast)
   )
 
   // ES DSL 默认结构
@@ -16,7 +21,7 @@ export function transpiler(ast: Ast): ESQuery {
     query: {
       'query_string': {
         query: '',
-        default_field: '_message'
+        'default_field': '_message'
       }
     },
     from: 0,
@@ -24,8 +29,6 @@ export function transpiler(ast: Ast): ESQuery {
     '_source': []
   })
 }
-
-type Resolver = (ast: Ast) => (dsl: ESQuery) => ESQuery
 
 /**
  * 条件组转字符串
@@ -64,25 +67,25 @@ const groups2string = (query: Ast[0]): string => query.groups.map(group => {
 /**
  * 解析出 query.query_string.query 字段
  * @param ast 抽象语法树
- * @returns 解析器
+ * @returns ES DSL
  */
 const resolveQuery: Resolver = ast => dsl => {
-    const [query] = ast
-    if (!query) {
-      return dsl
-    }
-
-    dsl.query.query_string.query = groups2string(query)
-
+  const [query] = ast
+  if (!query) {
     return dsl
   }
+
+  dsl.query.query_string.query = groups2string(query)
+
+  return dsl
+}
 
 /**
  * 解析出 aggr 字段
  * @param ast 抽象语法树
- * @returns 解析器
+ * @returns ES DSL
  */
-const resolveAggr: Resolver = ast => dsl => {
+const resolveOperation: Resolver = ast => dsl => {
   const [, operations] = ast
   if (!operations) {
     return dsl
@@ -99,16 +102,20 @@ const resolveAggr: Resolver = ast => dsl => {
 
   const { fields, groupBy, } = operation.value
   const [first] = fields
-  const initialTerm: ast.StatisticTerm = {
+  const initialTerm: ESQueryStatisticTerm = {
     field: first.fieldName,
-    size: AGGR_MAX_SIZE
   }
-  const initialAggr: ast.StatisticAggr = {
+
+  if (first.aggr === 'count') {
+    initialTerm.size = AGGR_MAX_SIZE
+  }
+
+  const initialAggr: ESQueryStatisticAggr = {
     [first.alias ?? `${first.aggr}(${first.fieldName})`]: {
       [first.aggr === 'count' ? 'terms' : first.aggr]: initialTerm
     }
   }
-  const aggs: ESQuery['aggs'] = (groupBy ?? []).reduceRight<ast.StatisticAggr>((aggs, item) => {
+  const aggs: ESQuery['aggs'] = (groupBy ?? []).reduceRight<ESQueryStatisticAggr>((aggs, item) => {
     return {
       [item.fieldName]: {
         terms: {
@@ -125,30 +132,50 @@ const resolveAggr: Resolver = ast => dsl => {
   return dsl
 }
 
-
 /**
- * 解析出 sort 字段
+ * 
  * @param ast 抽象语法树
- * @returns 解析器
+ * @returns ES DSL
  */
-const resolveSort: Resolver = ast => dsl => {
-  return dsl
-}
+const resolveCommand: Resolver = ast => dsl => {
+  const [, , commands] = ast
+  if (!commands) {
+    return dsl
+  }
 
-/**
- * 解析出 _source 字段
- * @param ast 抽象语法树
- * @returns 解析器
- */
-const resolveSource: Resolver = ast => dsl => {
-  return dsl
-}
+  // 解析命令
+  for (const cmd of commands) {
+    if (cmd.type === 'fields') {
+      throw new Error('Not Implemented: fields')
+    } else if (cmd.type === 'head') {
+      throw new Error('Not Implemented: head')
+    } else if (cmd.type === 'limit') {
+      throw new Error('Not Implemented: limit')
+    } else if (cmd.type === 'rare') {
+      throw new Error('Not Implemented: rare')
+    } else if (cmd.type === 'sort') {
+      const sort: ESQuerySort[] = cmd.value.map<ESQuerySort>(item => ({
+        [item.fieldName]: {
+          order: item.order ?? "desc",
+          'unmapped_type': 'string'
+        }
+      }))
+      dsl.sort = sort
+    } else if (cmd.type === 'table') {
+      throw new Error('Not Implemented: table')
+    } else if (cmd.type === 'tail') {
+      throw new Error('Not Implemented: tail')
+    } else if (cmd.type === 'top') {
+      throw new Error('Not Implemented: top')
+    } else if (cmd.type === 'transaction') {
+      throw new Error('Not Implemented: transaction')
+    } 
+  }
 
-/**
- * 解析出 script_field 字段
- * @param ast 抽象语法树
- * @returns 解析器
- */
-const resolveScriptFields: Resolver = ast => dsl => {
+  // 提供默认排序字段与排序规则
+  if (!dsl.sort || dsl.sort.length === 0) {
+    dsl.sort = [{ [EVENT_TIME]: { order: 'desc', 'unmapped_type': 'long' } }]
+  }
+
   return dsl
 }

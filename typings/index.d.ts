@@ -2,6 +2,27 @@ interface ESQuerySort {
   [key: string]: { order: 'asc' | 'desc', 'unmapped_type': 'long' | 'string' }
 }
 
+interface ESQueryStatisticTerm {
+  field: string,
+  size?: number
+}
+
+enum ESQueryStatisticAggrType {
+  terms = 'terms', // case when aggr is count
+  max = 'max',
+  min = 'min',
+  sum = 'sum',
+  avg = 'avg'
+}
+
+interface ESQueryStatisticAggr {
+  // 应该只有一个 key
+  [key: string]: {
+    [key: ESQueryStatisticAggrType]: ESQueryStatisticTerm,
+    aggs?: ESQueryStatisticAggr
+  }
+}
+
 interface ESQuery {
   // NOTE: ES DSL 要求的命名风格
   query: {
@@ -13,7 +34,7 @@ interface ESQuery {
   from: number
   size: number
   _source: string[]
-  aggs?: ast.StatisticAggr,
+  aggs?: ESQueryStatisticAggr,
   sort?: ESQuerySort[] | undefined
   'script_fields'?: unknown
 }
@@ -34,15 +55,11 @@ declare namespace ast {
   }
 
   type ConditionNodeType = {
-    [ConditionType.KeyValue]: FieldNode,
+    [ConditionType.KeyValue]: Field,
     [ConditionType.SingleKeyword]: string,
     [ConditionType.UnionKeywords]: string,
     [ConditionType.Union]: Query,
   }
-
-  type Condition = {
-    [key in keyof typeof ConditionType]: ConditionNode<key>
-  }[keyof typeof ConditionType]
 
   enum OperationType {
     Statistic = "Statistic",
@@ -70,13 +87,44 @@ declare namespace ast {
     },
   }
 
-  type Operation = {
-    [key in keyof typeof OperationType]: OperationNode<key>
-  }[keyof typeof OperationType]
-
-  interface Command {
-
+  enum CommandType {
+    sort = "sort",
+    limit = "limit",
+    head = "head",
+    tail = "tail",
+    top = "top",
+    rare = "rare",
+    fields = "fields",
+    table = "table",
+    transaction = "transaction"
   }
+
+  type CommandNodeType = {
+    [CommandType.sort]: {
+      fieldName: string,
+      order?: "asc" | "desc"
+    }[]
+    [CommandType.limit]: unknown
+    [CommandType.head]: unknown
+    [CommandType.tail]: unknown
+    [CommandType.top]: unknown
+    [CommandType.rare]: unknown
+    [CommandType.fields]: unknown
+    [CommandType.table]: unknown
+    [CommandType.transaction]: unknown
+  }
+
+  type Operation = ({
+    [key in keyof typeof OperationType]: Node<key, OperationNodeType>
+  })[keyof typeof OperationType]
+
+  type Command = ({
+    [key in keyof typeof CommandType]: Node<key, CommandNodeType>
+  })[keyof typeof CommandType]
+
+  type Condition = ({
+    [key in keyof typeof ConditionType]: ConditionNode<key>
+  })[keyof typeof ConditionType]
 
   interface Query {
     groups: Group[]
@@ -86,45 +134,23 @@ declare namespace ast {
     conditions: Condition[]
   }
 
-  interface OperationNode<T> {
+  interface Node<T, P = unknown> {
     type: T,
-    value: OperationNodeType[T]
+    value: P[T]
   }
 
-  interface ConditionNode<T> {
-    type: T,
-    value: ConditionNodeType[T],
+  interface ConditionNode<T> extends Node<T, ConditionNodeType> {
     decorator: ("NOT")[]
   }
 
-  interface FieldNode {
+  interface Field {
     fieldName: string,
-      fieldValue: {
+    fieldValue: {
       type: 'string' | 'number' | 'regexp' | 'range',
-        value: unknown
+      value: unknown
     }
   }
 
-  interface StatisticTerm {
-    field: string,
-    size: number
-  }
-
-  enum StatisticAggrType {
-    terms = 'terms', // case when aggr is count
-    max = 'max',
-    min = 'min',
-    sum = 'sum',
-    avg = 'avg'
-  }
-
-  interface StatisticAggr {
-    // 应该只有一个 key
-    [key: string]: {
-      [key: StatisticAggrType]: StatisticTerm,
-      aggs?: StatisticAggr
-    }
-  }
 }
 
 type Ast = [

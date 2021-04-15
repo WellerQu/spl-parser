@@ -123,7 +123,6 @@ describe("高级查询", () => {
   describe("stats统计", () => {
     it("count: 统计数量", () => {
       const dsl = transfer(`* | stats count(fieldName)`)
-      expect(dsl.aggs).not.toBeUndefined()
       expect(dsl.aggs).toEqual({
         "count(fieldName)": {
           "terms": {
@@ -135,41 +134,185 @@ describe("高级查询", () => {
     })
 
     it("min: 统计最⼩值", () => {
-      parse(`* | stats min(fieldName)`)
+      const dsl = transfer(`* | stats min(fieldName)`)
+      expect(dsl.aggs).toEqual({
+        "min(fieldName)": {
+          "min": {
+            "field": "fieldName"
+          }
+        }
+      })
     })
 
     it("max: 统计最⼤值", () => {
-      parse(`* | stats max(fieldName)`)
+      const dsl = transfer(`* | stats max(fieldName)`)
+      expect(dsl.aggs).toEqual({
+        "max(fieldName)": {
+          "max": {
+            "field": "fieldName"
+          }
+        }
+      })
     })
 
     it("avg: 统计平均值", () => {
-      parse(`* | stats avg(fieldName)`)
+      const dsl = transfer(`* | stats avg(fieldName)`)
+      expect(dsl.aggs).toEqual({
+        "avg(fieldName)": {
+          "avg": {
+            "field": "fieldName"
+          }
+        }
+      })
     })
 
     it("sum: 统计总和", () => {
-      parse(`* | stats sum(fieldName)`)
+      const dsl = transfer(`* | stats sum(fieldName)`)
+      expect(dsl.aggs).toEqual({
+        "sum(fieldName)": {
+          "sum": {
+            "field": "fieldName"
+          }
+        }
+      })
     })
 
     it("group by 分组，by后面可用多个字段进行分组", () => {
-      parse(`* | stats count(fieldName) by fieldName`)
+      {
+        const dsl = transfer(`* | stats count(fieldName) by groupFieldName`)
+        expect(dsl.aggs).toEqual({
+          "groupFieldName": {
+            "terms": {
+              "field": "groupFieldName",
+              "size": 10000
+            },
+            "aggs": {
+              "count(fieldName)": {
+                "terms": {
+                  "field": "fieldName",
+                  "size": 10000
+                }
+              }
+            }
+          }
+        })
+      }
+
+      {
+        const dsl = transfer(`* | stats count(fieldName) by group1, group2`)
+        expect(dsl.aggs).toEqual({
+          "group1": {
+            "terms": {
+              "field": "group1",
+              "size": 10000
+            },
+            "aggs": {
+              "group2": {
+                "terms": {
+                  "field": "group2",
+                  "size": 10000
+                },
+                "aggs": {
+                  "count(fieldName)": {
+                    "terms": {
+                      "field": "fieldName",
+                      "size": 10000
+                    }
+                  }
+                }
+              }
+            }
+          }        
+        })
+      }
     })
 
     it("as 别名", () => {
-      parse(`* | stats count(fieldName) as ce`)
+      const dsl = transfer(`* | stats count(fieldName) as ce`)
+      expect(dsl.aggs).toEqual({
+        "ce": {
+          "terms": {
+            "field": "fieldName",
+            "size": 10000
+          }
+        }
+      })
     })
 
     it("综合", () => {
-      parse(`* | stats count(fieldName) as ce by hello,world`)
+      const dsl = transfer(`* | stats count(fieldName) as ce by hello, world`)
+      expect(dsl.aggs).toEqual({
+        "hello": {
+          "terms": {
+            "field": "hello",
+            "size": 10000
+          },
+          "aggs": {
+            "world": {
+              "terms": {
+                "field": "world",
+                "size": 10000
+              },
+              "aggs": {
+                "ce": {
+                  "terms": {
+                    "field": "fieldName",
+                    "size": 10000
+                  }
+                }
+              }
+            }
+          }
+        }
+      })
     })
   })
 
   describe("sort根据指定字段排序，多个字段时依次级联排序，默认为降序", () => {
-    it("默认排序", () => {
-      parse(`* | sort by timestamp,offset`)
+    it("默认字段", () => {
+      const dsl = transfer(`*`)
+      expect(dsl.sort).toEqual([
+        {
+          "_event_time": {
+            order: "desc",
+            'unmapped_type': 'long'
+          }
+        }
+      ])
     })
 
-    it("显示排序", () => {
-      parse(`* | sort by timestamp+,offset-`)
+    it("默认规则", () => {
+      const dsl = transfer(`* | sort by timestamp,offset`)
+      expect(dsl.sort).toEqual([
+        {
+          "timestamp": {
+            "order": "desc",
+            "unmapped_type": "string"
+          }
+        },
+        {
+          "offset": {
+            "order": "desc",
+            "unmapped_type": "string"
+          }
+        }
+      ])
+    })
+
+    it("显示规则", () => {
+      const dsl = transfer(`* | sort by timestamp+,offset-`)
+      expect(dsl.sort).toEqual([{
+        "timestamp": {
+          "order": "asc",
+          "unmapped_type": "string"
+        }
+      },
+        {
+          "offset": {
+            "order": "desc",
+            "unmapped_type": "string"
+          }
+        }])
     })
   })
 
