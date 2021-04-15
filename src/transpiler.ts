@@ -154,7 +154,7 @@ const resolveCommand: Resolver = ast => dsl => {
   // 解析命令
   for (const cmd of commands) {
     if (cmd.type === 'fields') {
-      throw new Error('Not Implemented: fields')
+      dsl._source = ["_message", "_event_time"].concat(cmd.value)
     } else if (cmd.type === 'head') {
       throw new Error('Not Implemented: head')
     } else if (cmd.type === 'limit') {

@@ -333,8 +333,16 @@ describe("高级查询", () => {
     })
   })
 
-  it("fields对搜索结果的字段进⾏挑选", () => {
-    parse(`* | fields [path,hostname]`)
+  describe("", () => {
+    it("fields对收缩结果的字段默认无影响", () => {
+      const dsl = transfer(`*`)
+      expect(dsl._source).toEqual([])
+    })
+
+    it("fields对搜索结果的字段进⾏挑选", () => {
+      const dsl = transfer(`* | fields [path,hostname]`)
+      expect(dsl._source).toEqual(["_message", "_event_time", "path", "hostname"])
+    })
   })
 
   describe("eval计算", () => {

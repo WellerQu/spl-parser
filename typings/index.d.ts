@@ -109,7 +109,7 @@ declare namespace ast {
     [CommandType.tail]: unknown
     [CommandType.top]: unknown
     [CommandType.rare]: unknown
-    [CommandType.fields]: unknown
+    [CommandType.fields]: string[]
     [CommandType.table]: unknown
     [CommandType.transaction]: unknown
   }
