@@ -82,10 +82,10 @@ Keyword =
  */
 KeyValue =
   fieldName:FieldName
-  Space* "=" Space*
+  Space* Equal Space*
   fieldValue:(
     Quote value:QuoteStr Quote { return kvNode("string", value) }
-    / RegExp value:RegExpStr RegExp { return kvNode("regexp", value) }
+    / Slash value:RegExpStr Slash { return kvNode("regexp", value) }
     / value:RangeValue { return kvNode("range", value) }
     / value:Identifier { return kvNode("string", value) }
   ) { return conditionNode('KeyValue', { fieldName, fieldValue }, []) }
@@ -94,13 +94,13 @@ KeyValue =
  * 数字范围描述
  */
 RangeValue =
-  left:("["/"{") Space* value1:Num Space+ "TO" Space+ value2:Num Space* right:("]"/"}") { return left + value1 + " TO " + value2 + right }
+  left:(L_M_Bracket/L_L_Bracket) Space* value1:Num Space+ TO Space+ value2:Num Space* right:(R_M_Bracket/R_L_Bracket) { return left + value1 + " TO " + value2 + right }
 
 /**
  * 特殊键值对
  */
 _Exist_ =
-  "_exists_" Space* "=" Space*
+  _exists_ Space* Equal Space*
   value:(
     Quote str:QuoteStr Quote { return kvNode("string", str) }
     / str:Identifier { return kvNode("string", str) }
@@ -109,7 +109,7 @@ _Exist_ =
 /**
  * 联合多个条件作为一个条件, 可以嵌套
  */
-Union = "(" Space* SPL:SPL Space* ")" { return conditionNode('Union', SPL, []) }
+Union = L_S_Bracket Space* SPL:SPL Space* R_S_Bracket { return conditionNode('Union', SPL, []) }
 // -------------------------------------- 查询结束 --------------------------------------
 
 // -------------------------------------- 统计开始 --------------------------------------
@@ -117,7 +117,7 @@ Union = "(" Space* SPL:SPL Space* ")" { return conditionNode('Union', SPL, []) }
  * 统计主体
  */
 Statistic =
-  Stats Space+ field:StatsField moreFields:(Space* "," Space* next:StatsField)*
+  Stats Space+ field:StatsField moreFields:(Space* Comma Space* next:StatsField)*
   groupBy:StatsBy?
   afterFilters:StatsAfterFilter? { return statsNode("Statistic", {fields: [field, ...moreFields], groupBy, filters: afterFilters}) }
 
@@ -126,10 +126,10 @@ Statistic =
  */
 StatsField =
   aggr:(Count/Min/Max/Sum/Avg/DC)
-  Space* "(" Space*
+  Space* L_S_Bracket Space*
   field:FieldName
   filter:StatsBeforeFilter?
-  Space* ")"
+  Space* R_S_Bracket
   alias:StatsAs?
   { return { aggr, fieldName: field, alias, filter } }
 
@@ -146,54 +146,23 @@ StatsAs =
 StatsBy =
   Space+ By Space+
   field:StatsBucketSortLimit
-  moreFields:(Space* "," Space* next:StatsBucketSortLimit { return next })* { return [field, ...moreFields] }
+  moreFields:(Space* Comma Space* next:StatsBucketSortLimit { return next })* { return [field, ...moreFields] }
 
 StatsBucketSortLimit =
   field:FieldName
   sortLimits:(
-    Space* "[" Space* SortBy Space+ fn:Identifier Space* "," Space* sn:Integer Space* "]" { return {fn, sn} }
+    Space* L_M_Bracket Space* SortBy Space+ fn:Identifier Space* Comma Space* sn:Integer Space* R_M_Bracket { return {fn, sn} }
   )? { return {fieldName: field, sortLimits} }
 
 StatsBeforeFilter =
-  "[" Space* FilterF Space+ name:FieldName Space* "=" Space* value:Identifier Space* "]" { return {fieldName: name, fieldValue:value} }
+  L_M_Bracket Space* FilterF Space+ name:FieldName Space* Equal Space* value:Identifier Space* R_M_Bracket { return {fieldName: name, fieldValue:value} }
 
 StatsAfterFilter =
-  Space* Pipe Space* FilterF Space+ item:MetricFuncExpr moreItems:(Space* "," Space* next:MetricFuncExpr { return next })* { return [item, ...moreItems] }
+  Space* Pipe Space* FilterF Space+ item:MetricFuncExpr moreItems:(Space* Comma Space* next:MetricFuncExpr { return next })* { return [item, ...moreItems] }
 
 MetricFuncExpr =
-  $(FieldName Space* ("="/">"/"<") Space* Num)
+  $(FieldName Space* (Equal/Gt/Lt) Space* Num)
 // -------------------------------------- 统计结束 --------------------------------------
-
-// -------------------------------------- 计算开始 --------------------------------------
-/**
- */
-Evaluation =
-  Eval Space+ newName:FieldName Space* "=" Space* base:(Unary/Binary) { return evalNode("eval", {...base}) }
-
-/**
- * 一元操作
- */
-Unary =
-  fn:(Ceil/Floor/Abs) Space* "(" param:$(Expr) ")" { return { fn, params: [param]} }
-
-/**
- * 二元操作
- */
-Binary =
-  fn:(Max/Min) Space* "(" Space* param1:$(Expr) Space* "," Space* param2:$(Expr) Space* ")" { return { fn, params: [param1, param2]} }
-
-/**
- * 四则运算
- */
-Expr =
-  Term (Space* ("+"/"-") Space* Term)*
-Term =
-  Factor (Space* ("*"/"/") Space* Factor)*
-Factor =
-  "(" Space* Expr Space* ")"
-  / Num
-  / FieldName
-// -------------------------------------- 计算结束 --------------------------------------
 
 // -------------------------------------- 命令开始 --------------------------------------
 /**
@@ -202,38 +171,38 @@ Factor =
 Sort =
   SortBy Space+
   name:SortField
-  moreNames:(Space* "," Space* next:SortField { return next })* { return cmdNode("sort", [name, ...moreNames]) }
+  moreNames:(Space* Comma Space* next:SortField { return next })* { return cmdNode("sort", [name, ...moreNames]) }
 
 SortField =
   name:FieldName
-  order:("-"/"+")? { return { name, order } }
+  order:(Minus { return "desc" } /Plus { return "asc" } )? { return order ? { fieldName: name, order } : { fieldName: name } }
 
 /**
  * 限制返回数据条数命令
  */
 Limit =
-  LimitN Space+ n:$([0-9]+) { return cmdNode("limit", n) }
+  LimitN Space+ n:Integer { return cmdNode("limit", n) }
 
 Head =
-  HeadN Space+ n:$([0-9]+) { return cmdNode("head", n) }
+  HeadN Space+ n:Integer { return cmdNode("head", n) }
 
 Tail =
-  TailN Space+ n:$([0-9]+) { return cmdNode("tail", n) }
+  TailN Space+ n:Integer { return cmdNode("tail", n) }
 
 Top =
-  TopNF Space+ n:$([0-9]+) Space+ field:FieldName { return cmdNode("top", [n, field]) }
+  TopNF Space+ n:Integer Space+ field:FieldName { return cmdNode("top", [n, field]) }
 
 Rare =
-  RareNF Space+ n:$([0-9]+) Space+ field:FieldName { return cmdNode("rare", [n, field]) }
+  RareNF Space+ n:Integer Space+ field:FieldName { return cmdNode("rare", [n, field]) }
 
 /**
  * 限制返回数据字段命令
  */
 Fields =
-  FieldsF Space* "[" Space* name:FieldName moreNames:(Space* "," Space* next:FieldName { return next })* Space* "]" { return cmdNode("fields", [name, ...moreNames]) }
+  FieldsF Space* L_M_Bracket Space* name:FieldName moreNames:(Space* Comma Space* next:FieldName { return next })* Space* R_M_Bracket { return cmdNode("fields", [name, ...moreNames]) }
 
 Table =
-  TableF Space+ name:FieldName moreNames:(Space* "," Space* next:FieldName { return next })* { return cmdNode("table", [name, ...moreNames]) }
+  TableF Space+ name:FieldName moreNames:(Space* Comma Space* next:FieldName { return next })* { return cmdNode("table", [name, ...moreNames]) }
 
 /**
  * 配置事务
@@ -244,21 +213,53 @@ Transaction =
   TransactionF Space+
   name:FieldName
   options:(
-    maxopentxn:(Space+ "maxopentxn" Space* "=" Space* value:Integer { return value })
-    maxopenevents:(Space+ "maxopenevents" Space* "=" Space* value:Integer { return value })? { return { maxopentxn, maxopenevents } }
+    maxopentxn:(Space+ "maxopentxn" Space* Equal Space* value:Integer { return value })
+    maxopenevents:(Space+ "maxopenevents" Space* Equal Space* value:Integer { return value })? { return { maxopentxn, maxopenevents } }
     /
-    maxopenevents:(Space+ "maxopenevents" Space* "=" Space* value:Integer { return value })
-    maxopentxn:(Space+ "maxopentxn" Space* "=" Space* value:Integer { return value })? { return { maxopentxn, maxopenevents } }
+    maxopenevents:(Space+ "maxopenevents" Space* Equal Space* value:Integer { return value })
+    maxopentxn:(Space+ "maxopentxn" Space* Equal Space* value:Integer { return value })? { return { maxopentxn, maxopenevents } }
   )? { return cmdNode("transaction", {name, options}) }
+
+/**
+ * 计算
+ */
+Evaluation =
+  Eval Space+ newName:FieldName Space* Equal Space* base:(Unary/Binary) { return evalNode("eval", {...base}) }
+
+/**
+ * 一元操作
+ */
+Unary =
+  fn:(Ceil/Floor/Abs) Space* L_S_Bracket param:$(Expr) R_S_Bracket { return { fn, params: [param]} }
+
+/**
+ * 二元操作
+ */
+Binary =
+  fn:(Max/Min) Space* L_S_Bracket Space* param1:$(Expr) Space* Comma Space* param2:$(Expr) Space* R_S_Bracket { return { fn, params: [param1, param2]} }
+
+/**
+ * 四则运算
+ */
+Expr =
+  Term (Space* (Plus/Minus) Space* Term)*
+Term =
+  Factor (Space* (Times/Slash) Space* Factor)*
+Factor =
+  L_S_Bracket Space* Expr Space* R_S_Bracket
+  / Num
+  / FieldName
 // -------------------------------------- 命令结束 --------------------------------------
 
 /**
  * 词法
  */
+_exists_ = "_exists_"
 Space "Space" = [ \r\n\t]
 AND = "AND"
 OR = "OR"
 NOT = "NOT"
+TO = "TO"
 Count = "count"
 Min = "min"
 Max = "max"
@@ -285,8 +286,21 @@ Stats = "stats"
 Pipe = "|"
 Quote "双引号" = '"'
 QuoteStr = $([^"]*)
-RegExp = "/"
+Slash = "/"
+Comma = ","
 RegExpStr = $([^/]+)
+L_L_Bracket = "{"
+R_L_Bracket = "}"
+L_M_Bracket = "["
+R_M_Bracket = "]"
+L_S_Bracket = "("
+R_S_Bracket = ")"
+Equal = "="
+Gt = ">"
+Lt = "<"
+Plus = "+"
+Minus = "-"
+Times = "*"
 Num = $(Integer ("." Integer)?)
 Integer = $([0-9]+)
 FieldName "字段名称" = $([a-zA-Z@]+[a-zA-Z0-9]*)
