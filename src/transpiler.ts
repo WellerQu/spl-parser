@@ -5,11 +5,13 @@ const AGGR_MAX_SIZE = 10000
 export function transpiler(ast: Ast): ESQuery {
   const resolve = pipe(
     resolveQuery(ast),
+    resolveSort(ast),
     resolveAggr(ast),
     resolveSource(ast),
-    ResolveScriptFields(ast)
+    resolveScriptFields(ast)
   )
 
+  // ES DSL 默认结构
   return resolve({
     query: {
       'query_string': {
@@ -23,76 +25,114 @@ export function transpiler(ast: Ast): ESQuery {
   })
 }
 
-type Resolver = (dsl: ESQuery) => ESQuery
+type Resolver = (ast: Ast) => (dsl: ESQuery) => ESQuery
+
+/**
+ * 条件组转字符串
+ * @param query 抽象语法树的查询段
+ * @returns 查询语句
+ */
+const groups2string = (query: Ast[0]): string => query.groups.map(group => {
+  return group.conditions.map(condition => {
+    const result = condition.decorator.includes('NOT') ? ['NOT'] : []
+
+    if (condition.type === 'SingleKeyword') {
+      result.push(condition.value)
+    }
+    if (condition.type === 'UnionKeywords') {
+      result.push(`"${condition.value}"`)
+    }
+    if (condition.type === "KeyValue") {
+      const { fieldName, fieldValue } = condition.value
+      if (fieldValue.type === 'string')
+        result.push(`${fieldName}="${fieldValue.value}"`)
+      else if (fieldValue.type === 'number')
+        result.push(`${fieldName}=${fieldValue.value}`)
+      else if (fieldValue.type === 'regexp')
+        result.push(`${fieldName}=/${fieldValue.value}/`)
+      else if (fieldValue.type === 'range')
+        result.push(`${fieldName}=${fieldValue.value}`)
+    }
+    if (condition.type === "Union") {
+      result.push(groups2string(condition.value))
+    }
+
+    return result.join(' ')
+  }).join(' AND ')
+}).join(' OR ')
 
 /**
  * 解析出 query.query_string.query 字段
  * @param ast 抽象语法树
  * @returns 解析器
  */
-function resolveQuery(ast: Ast): Resolver {
-
-  const groups = (query: Ast[0]): string => query.groups.map(group => {
-    return group.conditions.map(condition => {
-      const result = condition.decorator.includes('NOT') ? ['NOT'] : []
-
-      if (condition.type === 'SingleKeyword') {
-        result.push(condition.value)
-      }
-      if (condition.type === 'UnionKeywords') {
-        result.push(`"${condition.value}"`)
-      }
-      if (condition.type === "KeyValue") {
-        const { fieldName, fieldValue } = condition.value
-        if (fieldValue.type === 'string')
-          result.push(`${fieldName}="${fieldValue.value}"`)
-        else if (fieldValue.type === 'number')
-          result.push(`${fieldName}=${fieldValue.value}`)
-        else if (fieldValue.type === 'regexp') 
-          result.push(`${fieldName}=/${fieldValue.value}/`)
-        else if (fieldValue.type === 'range')
-          result.push(`${fieldName}=${fieldValue.value}`)
-      }
-      if (condition.type === "Union") {
-        result.push(groups(condition.value))
-      }
-
-      return result.join(' ')
-    }).join(' AND ')
-  }).join(' OR ')
-
-  return dsl => {
+const resolveQuery: Resolver = ast => dsl => {
     const [query] = ast
     if (!query) {
       return dsl
     }
 
-    dsl.query.query_string.query = groups(query)
+    dsl.query.query_string.query = groups2string(query)
 
     return dsl
   }
-}
 
 /**
  * 解析出 aggr 字段
  * @param ast 抽象语法树
  * @returns 解析器
  */
-function resolveAggr(ast: Ast): Resolver {
-  return dsl => {
-    const [,operations] = ast
-    if (!operations) {
-      return dsl
-    }
-
-    operations.map(operation => {
-      if (operation.type === 'Statistic') {
-        const { fields, groupBy, filters } = operation.value
-      }
-    })
-
+const resolveAggr: Resolver = ast => dsl => {
+  const [, operations] = ast
+  if (!operations) {
     return dsl
   }
+
+  if (operations.length === 0) {
+    return dsl
+  }
+
+  const [operation] = operations
+  if (operation.type !== 'Statistic') {
+    return dsl
+  }
+
+  const { fields, groupBy, } = operation.value
+  const [first] = fields
+  const initialTerm: ast.StatisticTerm = {
+    field: first.fieldName,
+    size: AGGR_MAX_SIZE
+  }
+  const initialAggr: ast.StatisticAggr = {
+    [first.alias ?? `${first.aggr}(${first.fieldName})`]: {
+      [first.aggr === 'count' ? 'terms' : first.aggr]: initialTerm
+    }
+  }
+  const aggs: ESQuery['aggs'] = (groupBy ?? []).reduceRight<ast.StatisticAggr>((aggs, item) => {
+    return {
+      [item.fieldName]: {
+        terms: {
+          field: item.fieldName,
+          size: AGGR_MAX_SIZE
+        },
+        aggs
+      }
+    }
+  }, initialAggr)
+
+  dsl.aggs = aggs
+
+  return dsl
+}
+
+
+/**
+ * 解析出 sort 字段
+ * @param ast 抽象语法树
+ * @returns 解析器
+ */
+const resolveSort: Resolver = ast => dsl => {
+  return dsl
 }
 
 /**
@@ -100,8 +140,8 @@ function resolveAggr(ast: Ast): Resolver {
  * @param ast 抽象语法树
  * @returns 解析器
  */
-function resolveSource(ast: Ast): Resolver {
-  return dsl => dsl
+const resolveSource: Resolver = ast => dsl => {
+  return dsl
 }
 
 /**
@@ -109,6 +149,6 @@ function resolveSource(ast: Ast): Resolver {
  * @param ast 抽象语法树
  * @returns 解析器
  */
-function ResolveScriptFields(ast: Ast): Resolver {
-  return dsl => dsl
+const resolveScriptFields: Resolver = ast => dsl => {
+  return dsl
 }

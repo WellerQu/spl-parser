@@ -37,12 +37,12 @@ SPL = Query Operation* UniversalCommands*
 /**
  * 对查询结果进行特殊操作
  */
-Operation = Space* Pipe Space* operation:(Statistic/Evaluation) { return operation }
+Operation = Space* Pipe Space* operation:(Statistic) { return operation }
 
 /**
  * 对查询结果进行通用操作
  */
-UniversalCommands = Space* Pipe Space* command:(Sort/Top/Rare/Head/Tail/Limit/Fields/Table/Transaction) { return command }
+UniversalCommands = Space* Pipe Space* command:(Sort/Top/Rare/Head/Tail/Limit/Fields/Table/Transaction/Evaluation) { return command }
 
 // -------------------------------------- 查询开始 --------------------------------------
 /**
@@ -117,16 +117,21 @@ Union = "(" Space* SPL:SPL Space* ")" { return conditionNode('Union', SPL, []) }
  * 统计主体
  */
 Statistic =
-  Stats Space+ aggr:(Count/Min/Max/Sum/Avg/DC) Space* "(" Space* field:StatsField moreFields:(Space* "," Space* next:StatsField)* Space* ")"
-  alias:StatsAs?
+  Stats Space+ field:StatsField moreFields:(Space* "," Space* next:StatsField)*
   groupBy:StatsBy?
-  afterFilters:StatsAfterFilter? { return statsNode("stats", {aggr, fields: [field, ...moreFields], alias, groupBy, filters: afterFilters}) }
+  afterFilters:StatsAfterFilter? { return statsNode("Statistic", {fields: [field, ...moreFields], groupBy, filters: afterFilters}) }
 
 /**
  * 统计的聚合字段
  */
 StatsField =
-  field:FieldName filter:StatsBeforeFilter? { return { fieldName: field, filter } }
+  aggr:(Count/Min/Max/Sum/Avg/DC)
+  Space* "(" Space*
+  field:FieldName
+  filter:StatsBeforeFilter?
+  Space* ")"
+  alias:StatsAs?
+  { return { aggr, fieldName: field, alias, filter } }
 
 /**
  * 统计聚合字段的别名
@@ -147,7 +152,7 @@ StatsBucketSortLimit =
   field:FieldName
   sortLimits:(
     Space* "[" Space* SortBy Space+ fn:Identifier Space* "," Space* sn:Integer Space* "]" { return {fn, sn} }
-  )? { return {field, sortLimits} }
+  )? { return {fieldName: field, sortLimits} }
 
 StatsBeforeFilter =
   "[" Space* FilterF Space+ name:FieldName Space* "=" Space* value:Identifier Space* "]" { return {fieldName: name, fieldValue:value} }

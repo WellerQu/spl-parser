@@ -121,13 +121,13 @@ describe("数字字段⽀持范围查询", () => {
 
 describe("高级查询", () => {
   describe("stats统计", () => {
-    it.skip("count: 统计数量", () => {
+    it("count: 统计数量", () => {
       const dsl = transfer(`* | stats count(fieldName)`)
       expect(dsl.aggs).not.toBeUndefined()
       expect(dsl.aggs).toEqual({
         "count(fieldName)": {
           "terms": {
-            "field": "fieldName_string",
+            "field": "fieldName",
             "size": 10000
           }
         }

@@ -13,7 +13,7 @@ interface ESQuery {
   from: number
   size: number
   _source: string[]
-  aggs?: unknown,
+  aggs?: ast.StatisticAggr,
   sort?: ESQuerySort[] | undefined
   'script_fields'?: unknown
 }
@@ -51,7 +51,7 @@ declare namespace ast {
   type OperationNodeType = {
     [OperationType.Statistic]: {
       fields: {
-        aggr: string
+        aggr: 'count' | 'max' | 'min' | 'sum' | 'avg',
         fieldName: string,
         filter?: {
           fieldName: string,
@@ -59,7 +59,13 @@ declare namespace ast {
         },
         alias?: string
       }[]
-      groupBy?: string
+      groupBy?: {
+        fieldName: string,
+        sortLimits: {
+          fn: string, // 指标函数的别名
+          sn: number, // 限制分桶数据输出的数量, 不限时请输入0
+        } | null
+      }[]
       filters?: string[]
     },
   }
@@ -96,6 +102,27 @@ declare namespace ast {
       fieldValue: {
       type: 'string' | 'number' | 'regexp' | 'range',
         value: unknown
+    }
+  }
+
+  interface StatisticTerm {
+    field: string,
+    size: number
+  }
+
+  enum StatisticAggrType {
+    terms = 'terms', // case when aggr is count
+    max = 'max',
+    min = 'min',
+    sum = 'sum',
+    avg = 'avg'
+  }
+
+  interface StatisticAggr {
+    // 应该只有一个 key
+    [key: string]: {
+      [key: StatisticAggrType]: StatisticTerm,
+      aggs?: StatisticAggr
     }
   }
 }
