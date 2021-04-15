@@ -222,7 +222,7 @@ describe("高级查询", () => {
                 }
               }
             }
-          }        
+          }
         })
       }
     })
@@ -307,17 +307,30 @@ describe("高级查询", () => {
           "unmapped_type": "string"
         }
       },
-        {
-          "offset": {
-            "order": "desc",
-            "unmapped_type": "string"
-          }
-        }])
+      {
+        "offset": {
+          "order": "desc",
+          "unmapped_type": "string"
+        }
+      }])
     })
   })
 
-  it("limit搜索结果中，保留前N条结果", () => {
-    parse(`* | limit 10`)
+  describe("limit 限制结果返回条数", () => {
+    it("limit搜索结果中, 默认保留N条", () => {
+      const dsl = transfer(`*`)
+      expect(dsl.size).toBe(10)
+    })
+
+    it("limit搜索结果中，保留前N条结果", () => {
+      const dsl = transfer(`* | limit 20`)
+      expect(dsl.size).toBe(20)
+    })
+
+    it("limit搜索结果中, 最大不能超过M条", () => {
+      const dsl = transfer(`* | limit 10001`)
+      expect(dsl.size).toBe(10000)
+    })
   })
 
   it("fields对搜索结果的字段进⾏挑选", () => {

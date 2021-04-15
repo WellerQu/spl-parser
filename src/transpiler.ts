@@ -2,7 +2,15 @@ import { pipe } from './utils/pipe'
 
 type Resolver = (ast: Ast) => (dsl: ESQuery) => ESQuery
 
+/**
+ * 最大聚合范围
+ */
 const AGGR_MAX_SIZE = 10000
+
+/**
+ * 最大读取条数
+ */
+const RECORD_SIZE = 10000
 
 /**
  * log事件时间字段名
@@ -150,7 +158,7 @@ const resolveCommand: Resolver = ast => dsl => {
     } else if (cmd.type === 'head') {
       throw new Error('Not Implemented: head')
     } else if (cmd.type === 'limit') {
-      throw new Error('Not Implemented: limit')
+      dsl.size = +cmd.value
     } else if (cmd.type === 'rare') {
       throw new Error('Not Implemented: rare')
     } else if (cmd.type === 'sort') {
@@ -175,6 +183,10 @@ const resolveCommand: Resolver = ast => dsl => {
   // 提供默认排序字段与排序规则
   if (!dsl.sort || dsl.sort.length === 0) {
     dsl.sort = [{ [EVENT_TIME]: { order: 'desc', 'unmapped_type': 'long' } }]
+  }
+  // 提供对limit的最大最小约束
+  if (dsl.size > RECORD_SIZE) {
+    dsl.size = RECORD_SIZE
   }
 
   return dsl

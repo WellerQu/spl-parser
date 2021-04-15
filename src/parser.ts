@@ -3,6 +3,7 @@ import { grammar } from './grammar'
 
 export type ExpectedItem = peg.ExpectedItem
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isPEGSyntaxError(error: any): error is PegjsError {
   return error.name !== undefined
   && error.message !== undefined

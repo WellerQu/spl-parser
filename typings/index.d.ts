@@ -104,7 +104,7 @@ declare namespace ast {
       fieldName: string,
       order?: "asc" | "desc"
     }[]
-    [CommandType.limit]: unknown
+    [CommandType.limit]: string
     [CommandType.head]: unknown
     [CommandType.tail]: unknown
     [CommandType.top]: unknown
