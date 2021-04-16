@@ -8,7 +8,7 @@ export interface TransferOptions {
   /**
    * 类型映射关系, 若不提供此配置项, 则不会进行类型检查
    */
-  typeMapping: Map<string, ast.FieldValueType[]>
+  typeMapping: Map<string, TypeInfo[]>
 }
 
 /**

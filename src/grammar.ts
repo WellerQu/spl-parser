@@ -263,7 +263,7 @@ StringField =
 /**
  * 词法
  */
-_exists_ = "_exists_"
+_exists_ = "_" "exists" "_"
 Space "Space" = [ \r\n\t]
 AND = "AND"
 OR = "OR"

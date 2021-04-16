@@ -1,4 +1,5 @@
 /// <reference types="../typings" />
+/// <reference types="../typings/ast" />
 
 import { parse } from '../src/parser'
 import { transferFactory } from '../src'
@@ -34,22 +35,29 @@ describe("全文检索", () => {
 })
 
 describe("字段检索", () => {
-  const transfer = transferFactory()
+  const transfer = transferFactory({
+    typeMapping: new Map<string, TypeInfo[]>([
+      ["host", ["string", "regexp"]],
+      ["type", ["string"]],
+      ["_exists_", []]
+    ])
+  })
+
   it("字段host中包含localhost的日志", () => {
     {
       const dsl = transfer(`host=localhost`)
-      expect(dsl.query.query_string.query).toBe(`host:"localhost"`)
+      expect(dsl.query.query_string.query).toBe(`host_string:"localhost"`)
     }
 
     {
       const dsl = transfer(`host="localhost"`)
-      expect(dsl.query.query_string.query).toBe(`host:"localhost"`)
+      expect(dsl.query.query_string.query).toBe(`host_string:"localhost"`)
     }
   })
 
   it("字段type中匹配词组online offline的⽇志", () => {
     const dsl = transfer(`type="online offline"`)
-    expect(dsl.query.query_string.query).toBe(`type:"online offline"`)
+    expect(dsl.query.query_string.query).toBe(`type_string:"online offline"`)
   })
 
   it("存在字段type的⽇志", () => {
@@ -64,9 +72,22 @@ describe("字段检索", () => {
     }
   })
 
-  it("正则检索", () => {
+  it("host 字段正则检索", () => {
     const dsl = transfer(`host=/host/`)
-    expect(dsl.query.query_string.query).toBe(`host:/host/`)
+    expect(dsl.query.query_string.query).toBe(`host_string:/host/`)
+  })
+
+  it("type 字段不支持正则检索", () => {
+    expect(() => {
+      transfer(`type=/int/`)
+    }).toThrow('字段 "type" 的类型 "[string]" 不支持此操作')
+
+  })
+  
+  it("nonExists 字段不存在", () => {
+    expect(() => {
+      transfer(`nonExists=2`)
+    }).toThrow('字段 "nonExists" 不存在')
   })
 })
 
@@ -74,17 +95,17 @@ describe("OR, AND, NOT", () => {
   const transfer = transferFactory()
   it("OR连接", () => {
     const dsl = transfer(`type="online offline" OR _exists_="type"`)
-    expect(dsl.query.query_string.query).toBe(`type:"online offline" OR _exists_:"type"`)
+    expect(dsl.query.query_string.query).toBe(`type_string:"online offline" OR _exists_:"type"`)
   })
 
   it("AND连接", () => {
     const dsl = transfer(`type="online offline" AND _exists_="type"`)
-    expect(dsl.query.query_string.query).toBe(`type:"online offline" AND _exists_:"type"`)
+    expect(dsl.query.query_string.query).toBe(`type_string:"online offline" AND _exists_:"type"`)
   })
 
   it("NOT连接", () => {
     const dsl = transfer(`type="online offline" OR NOT host="local?ost"`)
-    expect(dsl.query.query_string.query).toBe(`type:"online offline" OR NOT host:"local?ost"`)
+    expect(dsl.query.query_string.query).toBe(`type_string:"online offline" OR NOT host_string:"local?ost"`)
   })
 })
 
@@ -92,47 +113,63 @@ describe("通配符", () => {
   const transfer = transferFactory()
   it("通配符 * 表示0个或多个字符", () => {
     const dsl = transfer(`type=*line*`)
-    expect(dsl.query.query_string.query).toBe(`type:"*line*"`)
+    expect(dsl.query.query_string.query).toBe(`type_string:"*line*"`)
   })
 
   it("使用通配符 ? 来代替⼀个字符", () => {
     const dsl = transfer(`host=local?ost`)
-    expect(dsl.query.query_string.query).toBe(`host:"local?ost"`)
+    expect(dsl.query.query_string.query).toBe(`host_string:"local?ost"`)
   })
 })
 
 describe("数字字段⽀持范围查询", () => {
-  const transfer = transferFactory()
+  const transfer = transferFactory({
+    typeMapping: new Map<string, TypeInfo[]>([
+      ["grade", ["range", "number"]]
+    ])
+  })
+
   it("⽅括号中的范围是闭区间", () => {
     const dsl = transfer(`grade=[50 TO 80]`)
-    expect(dsl.query.query_string.query).toBe(`grade:[50 TO 80]`)
+    expect(dsl.query.query_string.query).toBe(`grade_number:[50 TO 80]`)
   })
 
   it("花括号中的范围是开区间", () => {
     const dsl = transfer(`grade={ 30  TO   60 }`)
-    expect(dsl.query.query_string.query).toBe(`grade:{30 TO 60}`)
+    expect(dsl.query.query_string.query).toBe(`grade_number:{30 TO 60}`)
   })
 
   it("⽅括号，花括号组合使⽤", () => {
     { 
       const dsl = transfer(`grade=[50 TO 80}`)
-      expect(dsl.query.query_string.query).toBe(`grade:[50 TO 80}`)
+      expect(dsl.query.query_string.query).toBe(`grade_number:[50 TO 80}`)
     }
 
     { 
       const dsl = transfer(`grade={50 TO 80]`)
-      expect(dsl.query.query_string.query).toBe(`grade:{50 TO 80]`)
+      expect(dsl.query.query_string.query).toBe(`grade_number:{50 TO 80]`)
     }
   })
 
   it("负数支持", () => {
     const dsl = transfer(`grade=[-2 TO -4]`)
-    expect(dsl.query.query_string.query).toBe(`grade:[-2 TO -4]`)
+    expect(dsl.query.query_string.query).toBe(`grade_number:[-2 TO -4]`)
   })
 })
 
 describe("高级查询", () => {
-  const transfer = transferFactory()
+  const transfer = transferFactory({
+    typeMapping: new Map<string, TypeInfo[]>([
+      ["fieldName", ["string", "number"]],
+      ["groupFieldName", ["string"]],
+      ["group1", ["string"]],
+      ["group2", ["string"]],
+      ["path", ["string"]],
+      ["hostname", ["string"]],
+      ["timestamp", ["string"]],
+      ["offset", ["string"]]
+    ])
+  })
 
   describe("stats统计", () => {
     it("count: 统计数量", () => {
@@ -140,7 +177,7 @@ describe("高级查询", () => {
       expect(dsl.aggs).toEqual({
         "count(fieldName)": {
           "terms": {
-            "field": "fieldName",
+            "field": "fieldName_string",
             "size": 10000
           }
         }
@@ -152,7 +189,7 @@ describe("高级查询", () => {
       expect(dsl.aggs).toEqual({
         "min(fieldName)": {
           "min": {
-            "field": "fieldName"
+            "field": "fieldName_number"
           }
         }
       })
@@ -163,7 +200,7 @@ describe("高级查询", () => {
       expect(dsl.aggs).toEqual({
         "max(fieldName)": {
           "max": {
-            "field": "fieldName"
+            "field": "fieldName_number"
           }
         }
       })
@@ -174,7 +211,7 @@ describe("高级查询", () => {
       expect(dsl.aggs).toEqual({
         "avg(fieldName)": {
           "avg": {
-            "field": "fieldName"
+            "field": "fieldName_number"
           }
         }
       })
@@ -185,7 +222,7 @@ describe("高级查询", () => {
       expect(dsl.aggs).toEqual({
         "sum(fieldName)": {
           "sum": {
-            "field": "fieldName"
+            "field": "fieldName_number"
           }
         }
       })
@@ -197,13 +234,13 @@ describe("高级查询", () => {
         expect(dsl.aggs).toEqual({
           "groupFieldName": {
             "terms": {
-              "field": "groupFieldName",
+              "field": "groupFieldName_string",
               "size": 10000
             },
             "aggs": {
               "count(fieldName)": {
                 "terms": {
-                  "field": "fieldName",
+                  "field": "fieldName_string",
                   "size": 10000
                 }
               }
@@ -217,19 +254,19 @@ describe("高级查询", () => {
         expect(dsl.aggs).toEqual({
           "group1": {
             "terms": {
-              "field": "group1",
+              "field": "group1_string",
               "size": 10000
             },
             "aggs": {
               "group2": {
                 "terms": {
-                  "field": "group2",
+                  "field": "group2_string",
                   "size": 10000
                 },
                 "aggs": {
                   "count(fieldName)": {
                     "terms": {
-                      "field": "fieldName",
+                      "field": "fieldName_string",
                       "size": 10000
                     }
                   }
@@ -246,7 +283,7 @@ describe("高级查询", () => {
       expect(dsl.aggs).toEqual({
         "ce": {
           "terms": {
-            "field": "fieldName",
+            "field": "fieldName_string",
             "size": 10000
           }
         }
@@ -254,23 +291,23 @@ describe("高级查询", () => {
     })
 
     it("综合", () => {
-      const dsl = transfer(`* | stats count(fieldName) as ce by hello, world`)
+      const dsl = transfer(`* | stats count(fieldName) as ce by group1, group2`)
       expect(dsl.aggs).toEqual({
-        "hello": {
+        "group1": {
           "terms": {
-            "field": "hello",
+            "field": "group1_string",
             "size": 10000
           },
           "aggs": {
-            "world": {
+            "group2": {
               "terms": {
-                "field": "world",
+                "field": "group2_string",
                 "size": 10000
               },
               "aggs": {
                 "ce": {
                   "terms": {
-                    "field": "fieldName",
+                    "field": "fieldName_string",
                     "size": 10000
                   }
                 }
@@ -347,7 +384,7 @@ describe("高级查询", () => {
     })
   })
 
-  describe("", () => {
+  describe("fields 限制结果返回字段", () => {
     it("fields对收缩结果的字段默认无影响", () => {
       const dsl = transfer(`*`)
       expect(dsl._source).toEqual([])
@@ -356,6 +393,14 @@ describe("高级查询", () => {
     it("fields对搜索结果的字段进⾏挑选", () => {
       const dsl = transfer(`* | fields [path,hostname]`)
       expect(dsl._source).toEqual(["_message", "_event_time", "path", "hostname"])
+    })
+  })
+
+  describe("table 限制结果返回字段", () => {
+    it("命令尚未支持类型检查", () => {
+      expect(() => {
+        transfer(`* | table a`)
+      }).toThrow('未支持检查的命令: table')
     })
   })
 

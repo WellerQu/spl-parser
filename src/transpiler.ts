@@ -1,4 +1,5 @@
 import { pipe } from './utils/pipe'
+import { format } from './utils/format'
 
 type Resolver = (ast: Ast) => (dsl: ESQuery) => ESQuery
 
@@ -16,6 +17,12 @@ const RECORD_SIZE = 10000
  * log事件时间字段名
  */
 const EVENT_TIME = '_event_time'
+
+export class ConditionError extends Error {}
+
+export class OperationError extends Error {}
+
+export class CommandError extends Error {}
 
 export function transpiler(ast: Ast): ESQuery {
   const resolve = pipe(
@@ -54,7 +61,9 @@ const groups2string = (query: Ast[0]): string => query.groups.map(group => {
       result.push(`"${condition.value}"`)
     }
     if (condition.type === "KeyValue") {
-      const { fieldName, fieldType, fieldValue } = condition.value
+      const { fieldType, fieldValue } = condition.value
+      const fieldName = format(condition.value)
+
       if (fieldType === 'string')
         result.push(`${fieldName}:"${fieldValue}"`)
       else if (fieldType === 'number')
@@ -64,7 +73,7 @@ const groups2string = (query: Ast[0]): string => query.groups.map(group => {
       else if (fieldType === 'range')
         result.push(`${fieldName}:${fieldValue}`)
       else if (fieldType === 'time')
-        throw new Error('Not Implemented: field type is time')
+        throw new ConditionError('Not Implemented: field type is time')
     }
     if (condition.type === "Union") {
       result.push(groups2string(condition.value))
@@ -107,13 +116,13 @@ const resolveOperation: Resolver = ast => dsl => {
 
   const [operation] = operations
   if (operation.type !== 'Statistic') {
-    return dsl
+    throw new OperationError('暂时不支持非统计操作')
   }
 
   const { fields, groupBy, } = operation.value
   const [first] = fields
   const initialTerm: ESQueryStatisticTerm = {
-    field: first.fieldName,
+    field: format(first)
   }
 
   if (first.aggr === 'count') {
@@ -126,10 +135,12 @@ const resolveOperation: Resolver = ast => dsl => {
     }
   }
   const aggs: ESQuery['aggs'] = (groupBy ?? []).reduceRight<ESQueryStatisticAggr>((aggs, item) => {
+    const fieldName = format(item)
+
     return {
       [item.fieldName]: {
         terms: {
-          field: item.fieldName,
+          field: fieldName,
           size: AGGR_MAX_SIZE
         },
         aggs
@@ -157,13 +168,9 @@ const resolveCommand: Resolver = ast => dsl => {
   for (const cmd of commands) {
     if (cmd.type === 'fields') {
       dsl._source = ["_message", "_event_time"].concat(cmd.value.map(item => item.fieldName))
-    } else if (cmd.type === 'head') {
-      throw new Error('Not Implemented: command is head')
-    } else if (cmd.type === 'limit') {
+    }  else if (cmd.type === 'limit') {
       dsl.size = +cmd.value
-    } else if (cmd.type === 'rare') {
-      throw new Error('Not Implemented: command is rare')
-    } else if (cmd.type === 'sort') {
+    }  else if (cmd.type === 'sort') {
       const sort: ESQuerySort[] = cmd.value.map<ESQuerySort>(item => ({
         [item.fieldName]: {
           order: item.order ?? "desc",
@@ -171,15 +178,9 @@ const resolveCommand: Resolver = ast => dsl => {
         }
       }))
       dsl.sort = sort
-    } else if (cmd.type === 'table') {
-      throw new Error('Not Implemented: command is table')
-    } else if (cmd.type === 'tail') {
-      throw new Error('Not Implemented: command is tail')
-    } else if (cmd.type === 'top') {
-      throw new Error('Not Implemented: command is top')
-    } else if (cmd.type === 'transaction') {
-      throw new Error('Not Implemented: command is transaction')
-    } 
+    } else {
+      throw new CommandError(`未支持翻译的命令: ${cmd.type}`)
+    }
   }
 
   // 提供默认排序字段与排序规则

@@ -51,3 +51,5 @@ type Ast = [
   ast.Operation[],
   ast.Command[]
 ]
+
+type TypeInfo = keyof typeof ast.FieldValueType

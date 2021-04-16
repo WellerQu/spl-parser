@@ -44,11 +44,12 @@ declare namespace ast {
       sn: number, // 限制分桶数据输出的数量, 不限时请输入0
     } | null
   }
+  type FilterField = Required<Field> & { operator: string }
   type OperationNodeType = {
     [OperationType.Statistic]: {
       fields: AggrField[]
       groupBy?: GroupField[]
-      filters?: string[]
+      filters?: FilterField[]
     },
   }
 
@@ -67,7 +68,7 @@ declare namespace ast {
   type SortField = Pick<Field, 'fieldName' | 'fieldType'> & {
     order?: "asc" | "desc"
   }
-  type SourceField = Pick<Field, 'fieldName' | 'fieldValue'>
+  type SourceField = Pick<Field, 'fieldName' | 'fieldType'>
   type CommandNodeType = {
     [CommandType.sort]: SortField[]
     [CommandType.limit]: string
