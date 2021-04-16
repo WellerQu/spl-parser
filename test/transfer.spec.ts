@@ -93,6 +93,7 @@ describe("字段检索", () => {
 
 describe("OR, AND, NOT", () => {
   const transfer = transferFactory()
+
   it("OR连接", () => {
     const dsl = transfer(`type="online offline" OR _exists_="type"`)
     expect(dsl.query.query_string.query).toBe(`type_string:"online offline" OR _exists_:"type"`)
@@ -106,6 +107,11 @@ describe("OR, AND, NOT", () => {
   it("NOT连接", () => {
     const dsl = transfer(`type="online offline" OR NOT host="local?ost"`)
     expect(dsl.query.query_string.query).toBe(`type_string:"online offline" OR NOT host_string:"local?ost"`)
+  })
+
+  it("联合条件", () => {
+    const dsl = transfer(`type=abc AND (host=local? OR host=*host) AND NOT type=cde`)
+    expect(dsl.query.query_string.query).toBe(`type_string:"abc" AND (host_string:"local?" OR host_string:"*host") AND NOT type_string:"cde"`)
   })
 })
 

@@ -64,38 +64,39 @@ export function transpiler(ast: Ast): ESQuery {
  * @param query 抽象语法树的查询段
  * @returns 查询语句
  */
-const groups2string = (query: Ast[0]): string => query.groups.map(group => {
-  return group.conditions.map(condition => {
-    const result = condition.decorator.includes('NOT') ? ['NOT'] : []
+const groups2string = (query: Ast[0]): string => 
+  query.groups.map(group => {
+    return group.conditions.map(condition => {
+      const result = condition.decorator.includes('NOT') ? ['NOT'] : []
 
-    if (condition.type === 'SingleKeyword') {
-      result.push(condition.value)
-    }
-    if (condition.type === 'UnionKeywords') {
-      result.push(`"${condition.value}"`)
-    }
-    if (condition.type === "KeyValue") {
-      const { fieldType, fieldValue } = condition.value
-      const fieldName = format(condition.value)
+      if (condition.type === 'SingleKeyword') {
+        result.push(condition.value)
+      }
+      if (condition.type === 'UnionKeywords') {
+        result.push(`"${condition.value}"`)
+      }
+      if (condition.type === "KeyValue") {
+        const { fieldType, fieldValue } = condition.value
+        const fieldName = format(condition.value)
 
-      if (fieldType === 'string')
-        result.push(`${fieldName}:"${fieldValue}"`)
-      else if (fieldType === 'number')
-        result.push(`${fieldName}:${fieldValue}`)
-      else if (fieldType === 'regexp')
-        result.push(`${fieldName}:/${fieldValue}/`)
-      else if (fieldType === 'range')
-        result.push(`${fieldName}:${fieldValue}`)
-      else if (fieldType === 'time')
-        throw new ConditionError('Not Implemented: field type is time')
-    }
-    if (condition.type === "Union") {
-      result.push(groups2string(condition.value))
-    }
+        if (fieldType === 'string')
+          result.push(`${fieldName}:"${fieldValue}"`)
+        else if (fieldType === 'number')
+          result.push(`${fieldName}:${fieldValue}`)
+        else if (fieldType === 'regexp')
+          result.push(`${fieldName}:/${fieldValue}/`)
+        else if (fieldType === 'range')
+          result.push(`${fieldName}:${fieldValue}`)
+        else if (fieldType === 'time')
+          throw new ConditionError('Not Implemented: field type is time')
+      }
+      if (condition.type === "Union") {
+        result.push("(" +groups2string(condition.value) + ")")
+      }
 
-    return result.join(' ')
-  }).join(' AND ')
-}).join(' OR ')
+      return result.join(' ')
+    }).join(' AND ')
+  }).join(' OR ')
 
 /**
  * 解析出 query.query_string.query 字段
@@ -182,9 +183,9 @@ const resolveCommand: Resolver = ast => dsl => {
   for (const cmd of commands) {
     if (cmd.type === 'fields') {
       dsl._source = ["_message", "_event_time"].concat(cmd.value.map(item => item.fieldName))
-    }  else if (cmd.type === 'limit') {
+    } else if (cmd.type === 'limit') {
       dsl.size = +cmd.value
-    }  else if (cmd.type === 'sort') {
+    } else if (cmd.type === 'sort') {
       const sort: ESQuerySort[] = cmd.value.map<ESQuerySort>(item => ({
         [item.fieldName]: {
           order: item.order ?? "desc",
