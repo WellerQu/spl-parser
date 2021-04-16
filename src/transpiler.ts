@@ -18,12 +18,26 @@ const RECORD_SIZE = 10000
  */
 const EVENT_TIME = '_event_time'
 
+/**
+ * 查询语句条件错误
+ */
 export class ConditionError extends Error {}
 
+/**
+ * 操作错误
+ */
 export class OperationError extends Error {}
 
+/**
+ * 命令错误
+ */
 export class CommandError extends Error {}
 
+/**
+ * 转译函数
+ * @param ast 抽象语法树
+ * @returns ElasticSearch DSL
+ */
 export function transpiler(ast: Ast): ESQuery {
   const resolve = pipe(
     resolveQuery(ast),
@@ -194,7 +208,6 @@ const resolveCommand: Resolver = ast => dsl => {
 
   return dsl
 }
-
 
 /**
  * 从DSL中移除 limit 相关字段(from, size)

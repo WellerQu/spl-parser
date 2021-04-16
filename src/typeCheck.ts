@@ -1,9 +1,14 @@
 import { identity } from './utils/identity'
 import { pipe } from './utils/pipe'
 
-
+/**
+ * 字段类型错误
+ */
 export class FieldTypeError extends Error {}
 
+/**
+ * 抽象语法树错误
+ */
 export class AstError extends Error {}
 
 /**
@@ -25,32 +30,37 @@ export const typeCheck = (mapping?: Map<string, TypeInfo[]>): (ast: Ast) => Ast 
 }
 
 /**
- * 基于字段类型的映射关系为字段添加类型
+ * 基于字段类型的映射关系检查字段是否支持当前操作
  * @param field 字段
  * @param mapping 字段类型映射关系
- * @returns 字段
  */
 function checkTypeBaseOnMapping(field: ast.Field, mapping: Map<string, TypeInfo[]>): void {
-  // 类型检查
+  // 字段不存在
   if (!mapping.has(field.fieldName)) {
     throw new FieldTypeError(`字段 "${field.fieldName}" 不存在`)
   }
 
-  // 系统字段不检查, 不改名
+  // 系统字段不检查
   if (field.fieldName.startsWith("_")) {
     return
   }
 
+  // 字段不支持任何类型, 一般不太可能出现, 触发开发者写错了.
   const types = mapping.get(field.fieldName)
-  if (!types) {
+  if (!types || types.length === 0) {
     throw new FieldTypeError(`字段 "${field.fieldName}" 对应的类型信息不存在`)
   }
 
+  // 字段当前的操作不被支持
   if (!types.includes(field.fieldType)) {
     throw new FieldTypeError(`字段 "${field.fieldName}" 的类型 "[${types.join(',')}]" 不支持此操作`)
   }
 }
 
+/**
+ * 检查器
+ * 注意, 检查器不会也不应该对抽象语法树做出任何改动
+ */
 type Checker = (mapping: Map<string, TypeInfo[]>) => (ast: Ast) => Ast
 
 /**
@@ -58,7 +68,7 @@ type Checker = (mapping: Map<string, TypeInfo[]>) => (ast: Ast) => Ast
  * 检查不通过会触发 FieldTypeError
  * @param ast 抽象语法树
  * @param mapping 字段类型关系映射
- * @returns 
+ * @returns 抽象语法树
  */
 const checkQuery: Checker = mapping => ast => {
   const [query] = ast
@@ -86,7 +96,7 @@ const checkQuery: Checker = mapping => ast => {
  * 检查不通过会触发 FieldTypeError
  * @param ast 抽象语法树
  * @param mapping 字段类型关系映射
- * @returns 
+ * @returns 抽象语法树
  */
 const checkOperation: Checker = mapping => ast => {
   const [, operations] = ast
@@ -94,11 +104,13 @@ const checkOperation: Checker = mapping => ast => {
     return ast
   }
 
-  // 循环检查
+  // 循环检查所有的操作
   for (const operation of operations) {
     if (operation.type !== 'Statistic') {
       throw new AstError('暂时不支持非统计操作')
     }
+
+    // 暂时只有一种操作类型, 就是统计
     const statistic = operation.value
 
     for (const field of statistic.fields) {
@@ -122,7 +134,7 @@ const checkOperation: Checker = mapping => ast => {
  * 检查不通过会触发 FieldTypeError
  * @param ast 抽象语法树
  * @param mapping 字段类型关系映射
- * @returns 
+ * @returns 抽象语法树
  */
 const checkCommands: Checker = mapping => ast => {
   const [, , commands] = ast
@@ -130,7 +142,7 @@ const checkCommands: Checker = mapping => ast => {
     return ast
   }
 
-  // 循环检查
+  // 循环检查所有的命令
   for (const command of commands) {
     if (command.type === 'limit') {
       continue
