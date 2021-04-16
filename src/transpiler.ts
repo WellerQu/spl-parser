@@ -185,9 +185,61 @@ const resolveCommand: Resolver = ast => dsl => {
     dsl.sort = [{ [EVENT_TIME]: { order: 'desc', 'unmapped_type': 'long' } }]
   }
   // 提供对limit的最大最小约束
-  if (dsl.size > RECORD_SIZE) {
+  if (dsl.size && dsl.size > RECORD_SIZE) {
     dsl.size = RECORD_SIZE
   }
+
+  return dsl
+}
+
+
+/**
+ * 从DSL中移除 limit 相关字段(from, size)
+ * @param dsl 待加工的 DSL 语句
+ */
+export const DSLRemovePagination = (dsl: ESQuery): ESQuery => {
+  dsl.from = undefined
+  dsl.size = undefined
+
+  return dsl
+}
+
+/**
+ * 从DSL语句中移除 _source 字段 
+ * @param dsl 待加工的 DSL 语句
+ */
+export const DSLRemoveSource = (dsl: ESQuery): ESQuery => {
+  dsl._source = undefined
+
+  return dsl
+}
+
+/**
+ * 从DSL语句中移除 aggs 字段
+ * @param dsl 待加工的 DSL 语句
+ */
+export const DSLRemoveAggs = (dsl: ESQuery): ESQuery => {
+  dsl.aggs = undefined
+
+  return dsl
+}
+
+/**
+ * 从DSL语句中移除sort字段
+ * @param dsl 代加工的 DSL 语句
+ */
+export const DSLRemoveSort = (dsl: ESQuery): ESQuery => {
+  dsl.sort = undefined
+
+  return dsl
+}
+
+/**
+ * 从DSL语句中移除script_fields字段
+ * @param dsl 待加工的 DSL 语句
+ */
+export const DSLRemoveScriptField = (dsl: ESQuery): ESQuery => {
+  dsl['script_fields'] = undefined
 
   return dsl
 }
