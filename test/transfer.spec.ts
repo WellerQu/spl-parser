@@ -113,6 +113,12 @@ describe("OR, AND, NOT", () => {
     const dsl = transfer(`type=abc AND (host=local? OR host=*host) AND NOT type=cde`)
     expect(dsl.query.query_string.query).toBe(`type_string:"abc" AND (host_string:"local?" OR host_string:"*host") AND NOT type_string:"cde"`)
   })
+
+  it("子查询", () => {
+    expect(() => { 
+      transfer(`type=abc AND (search host=123)`)
+    }).toThrowError('尚未支持的查询条件 SubSearch')
+  })
 })
 
 describe("通配符", () => { 

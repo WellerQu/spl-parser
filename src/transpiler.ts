@@ -71,11 +71,9 @@ const groups2string = (query: Ast[0]): string =>
 
       if (condition.type === 'SingleKeyword') {
         result.push(condition.value)
-      }
-      if (condition.type === 'UnionKeywords') {
+      } else if (condition.type === 'UnionKeywords') {
         result.push(`"${condition.value}"`)
-      }
-      if (condition.type === "KeyValue") {
+      } else if (condition.type === "KeyValue") {
         const { fieldType, fieldValue } = condition.value
         const fieldName = format(condition.value)
 
@@ -89,9 +87,10 @@ const groups2string = (query: Ast[0]): string =>
           result.push(`${fieldName}:${fieldValue}`)
         else if (fieldType === 'time')
           throw new ConditionError('Not Implemented: field type is time')
-      }
-      if (condition.type === "Union") {
-        result.push("(" +groups2string(condition.value) + ")")
+      } else if (condition.type === "SubQuery") {
+        result.push("(" + groups2string(condition.value) + ")")
+      } else {
+        throw new ConditionError(`尚未支持的查询条件 ${condition.type}`)
       }
 
       return result.join(' ')

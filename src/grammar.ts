@@ -113,7 +113,17 @@ _Exist_ =
 /**
  * 联合多个条件作为一个条件, 可以嵌套
  */
-Union = L_S_Bracket Space* Query:Query Space* R_S_Bracket { return conditionNode('Union', Query, []) }
+Union =
+  L_S_Bracket Space* query:(
+    subSearch:SubSearch { return conditionNode('SubSearch', subSearch, []) }
+    / subQuery:Query { return conditionNode('SubQuery', subQuery, []) }
+  ) Space* R_S_Bracket { return query }
+
+/**
+ * 子查询
+ */
+SubSearch =
+  Search Space* SPL:SPL { return SPL }
 // -------------------------------------- 查询结束 --------------------------------------
 
 // -------------------------------------- 统计开始 --------------------------------------
@@ -263,12 +273,13 @@ StringField =
 /**
  * 词法
  */
-_exists_ = "_exists_"
+_exists_ = "_" "exists" "_"
 Space "Space" = [ \r\n\t]
 AND = "AND"
 OR = "OR"
 NOT = "NOT"
 TO = "TO"
+Search = "search"
 Count = "count"
 Min = "min"
 Max = "max"

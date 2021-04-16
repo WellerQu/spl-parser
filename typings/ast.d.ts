@@ -18,14 +18,16 @@ declare namespace ast {
     SingleKeyword = "SingleKeyword",
     UnionKeywords = "UnionKeywords",
     KeyValue = "KeyValue",
-    Union = "Union"
+    SubQuery = "SubQuery",
+    SubSearch = "SubSearch"
   }
 
   type ConditionNodeType = {
     [ConditionType.KeyValue]: Field,
     [ConditionType.SingleKeyword]: string,
     [ConditionType.UnionKeywords]: string,
-    [ConditionType.Union]: Query,
+    [ConditionType.SubQuery]: Query,
+    [ConditionType.SubSearch]: unknown
   }
 
   enum OperationType {
