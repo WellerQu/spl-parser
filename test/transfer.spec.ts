@@ -27,6 +27,7 @@ describe("全文检索", () => {
   it("特殊符号", () => {
     const dsl = transfer(`@_?*.`)
     expect(dsl.query.query_string.query).toBe(`@_?*.`)
+    expect(dsl.query.query_string.default_field).toBe("_message")
   })
 })
 
@@ -34,88 +35,93 @@ describe("字段检索", () => {
   it("字段host中包含localhost的日志", () => {
     {
       const dsl = transfer(`host=localhost`)
-      expect(dsl.query.query_string.query).toBe(`host="localhost"`)
+      expect(dsl.query.query_string.query).toBe(`host:"localhost"`)
     }
 
     {
       const dsl = transfer(`host="localhost"`)
-      expect(dsl.query.query_string.query).toBe(`host="localhost"`)
+      expect(dsl.query.query_string.query).toBe(`host:"localhost"`)
     }
   })
 
   it("字段type中匹配词组online offline的⽇志", () => {
     const dsl = transfer(`type="online offline"`)
-    expect(dsl.query.query_string.query).toBe(`type="online offline"`)
+    expect(dsl.query.query_string.query).toBe(`type:"online offline"`)
   })
 
   it("存在字段type的⽇志", () => {
     {
       const dsl = transfer(`_exists_=type`)
-      expect(dsl.query.query_string.query).toBe(`_exists_="type"`)
+      expect(dsl.query.query_string.query).toBe(`_exists_:"type"`)
     }
 
     {
       const dsl = transfer(`_exists_="type"`)
-      expect(dsl.query.query_string.query).toBe(`_exists_="type"`)
+      expect(dsl.query.query_string.query).toBe(`_exists_:"type"`)
     }
   })
 
   it("正则检索", () => {
     const dsl = transfer(`host=/host/`)
-    expect(dsl.query.query_string.query).toBe(`host=/host/`)
+    expect(dsl.query.query_string.query).toBe(`host:/host/`)
   })
 })
 
 describe("OR, AND, NOT", () => {
   it("OR连接", () => {
     const dsl = transfer(`type="online offline" OR _exists_="type"`)
-    expect(dsl.query.query_string.query).toBe(`type="online offline" OR _exists_="type"`)
+    expect(dsl.query.query_string.query).toBe(`type:"online offline" OR _exists_:"type"`)
   })
 
   it("AND连接", () => {
     const dsl = transfer(`type="online offline" AND _exists_="type"`)
-    expect(dsl.query.query_string.query).toBe(`type="online offline" AND _exists_="type"`)
+    expect(dsl.query.query_string.query).toBe(`type:"online offline" AND _exists_:"type"`)
   })
 
   it("NOT连接", () => {
     const dsl = transfer(`type="online offline" OR NOT host="local?ost"`)
-    expect(dsl.query.query_string.query).toBe(`type="online offline" OR NOT host="local?ost"`)
+    expect(dsl.query.query_string.query).toBe(`type:"online offline" OR NOT host:"local?ost"`)
   })
 })
 
 describe("通配符", () => { 
   it("通配符 * 表示0个或多个字符", () => {
     const dsl = transfer(`type=*line*`)
-    expect(dsl.query.query_string.query).toBe(`type="*line*"`)
+    expect(dsl.query.query_string.query).toBe(`type:"*line*"`)
   })
 
   it("使用通配符 ? 来代替⼀个字符", () => {
     const dsl = transfer(`host=local?ost`)
-    expect(dsl.query.query_string.query).toBe(`host="local?ost"`)
+    expect(dsl.query.query_string.query).toBe(`host:"local?ost"`)
   })
 })
 
 describe("数字字段⽀持范围查询", () => {
   it("⽅括号中的范围是闭区间", () => {
     const dsl = transfer(`grade=[50 TO 80]`)
-    expect(dsl.query.query_string.query).toBe(`grade=[50 TO 80]`)
+    expect(dsl.query.query_string.query).toBe(`grade:[50 TO 80]`)
   })
 
   it("花括号中的范围是开区间", () => {
     const dsl = transfer(`grade={ 30  TO   60 }`)
-    expect(dsl.query.query_string.query).toBe(`grade={30 TO 60}`)
+    expect(dsl.query.query_string.query).toBe(`grade:{30 TO 60}`)
   })
 
   it("⽅括号，花括号组合使⽤", () => {
     { 
       const dsl = transfer(`grade=[50 TO 80}`)
-      expect(dsl.query.query_string.query).toBe(`grade=[50 TO 80}`)
+      expect(dsl.query.query_string.query).toBe(`grade:[50 TO 80}`)
     }
 
     { 
       const dsl = transfer(`grade={50 TO 80]`)
-      expect(dsl.query.query_string.query).toBe(`grade={50 TO 80]`)
+      expect(dsl.query.query_string.query).toBe(`grade:{50 TO 80]`)
     }
+  })
+
+  it("负数支持", () => {
+    const dsl = transfer(`grade=[-2 TO -4]`)
+    expect(dsl.query.query_string.query).toBe(`grade:[-2 TO -4]`)
   })
 })
 

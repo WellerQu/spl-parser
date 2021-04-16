@@ -56,13 +56,13 @@ const groups2string = (query: Ast[0]): string => query.groups.map(group => {
     if (condition.type === "KeyValue") {
       const { fieldName, fieldValue } = condition.value
       if (fieldValue.type === 'string')
-        result.push(`${fieldName}="${fieldValue.value}"`)
+        result.push(`${fieldName}:"${fieldValue.value}"`)
       else if (fieldValue.type === 'number')
-        result.push(`${fieldName}=${fieldValue.value}`)
+        result.push(`${fieldName}:${fieldValue.value}`)
       else if (fieldValue.type === 'regexp')
-        result.push(`${fieldName}=/${fieldValue.value}/`)
+        result.push(`${fieldName}:/${fieldValue.value}/`)
       else if (fieldValue.type === 'range')
-        result.push(`${fieldName}=${fieldValue.value}`)
+        result.push(`${fieldName}:${fieldValue.value}`)
     }
     if (condition.type === "Union") {
       result.push(groups2string(condition.value))

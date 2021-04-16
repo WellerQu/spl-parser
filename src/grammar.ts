@@ -94,7 +94,11 @@ KeyValue =
  * 数字范围描述
  */
 RangeValue =
-  left:(L_M_Bracket/L_L_Bracket) Space* value1:Num Space+ TO Space+ value2:Num Space* right:(R_M_Bracket/R_L_Bracket) { return left + value1 + " TO " + value2 + right }
+  left:(L_M_Bracket/L_L_Bracket) Space*
+  value1:(minus:Minus? Space* n:Num { return minus? -n : n} )
+  Space+ TO Space+
+  value2:(minus:Minus? Space* n:Num { return minus? -n : n} ) Space*
+  right:(R_M_Bracket/R_L_Bracket) { return left + value1 + " TO " + value2 + right }
 
 /**
  * 特殊键值对
