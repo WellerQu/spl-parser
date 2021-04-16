@@ -1,9 +1,11 @@
 /// <reference types="../typings" />
 
 import { parse } from '../src/parser'
-import { transfer } from '../src'
+import { transferFactory } from '../src'
 
 describe("全文检索", () => {
+  const transfer = transferFactory()
+
   it("error", () => {
     const dsl = transfer(`error`)
     expect(dsl.query.query_string.query).toBe("error")
@@ -32,6 +34,7 @@ describe("全文检索", () => {
 })
 
 describe("字段检索", () => {
+  const transfer = transferFactory()
   it("字段host中包含localhost的日志", () => {
     {
       const dsl = transfer(`host=localhost`)
@@ -68,6 +71,7 @@ describe("字段检索", () => {
 })
 
 describe("OR, AND, NOT", () => {
+  const transfer = transferFactory()
   it("OR连接", () => {
     const dsl = transfer(`type="online offline" OR _exists_="type"`)
     expect(dsl.query.query_string.query).toBe(`type:"online offline" OR _exists_:"type"`)
@@ -85,6 +89,7 @@ describe("OR, AND, NOT", () => {
 })
 
 describe("通配符", () => { 
+  const transfer = transferFactory()
   it("通配符 * 表示0个或多个字符", () => {
     const dsl = transfer(`type=*line*`)
     expect(dsl.query.query_string.query).toBe(`type:"*line*"`)
@@ -97,6 +102,7 @@ describe("通配符", () => {
 })
 
 describe("数字字段⽀持范围查询", () => {
+  const transfer = transferFactory()
   it("⽅括号中的范围是闭区间", () => {
     const dsl = transfer(`grade=[50 TO 80]`)
     expect(dsl.query.query_string.query).toBe(`grade:[50 TO 80]`)
@@ -126,6 +132,8 @@ describe("数字字段⽀持范围查询", () => {
 })
 
 describe("高级查询", () => {
+  const transfer = transferFactory()
+
   describe("stats统计", () => {
     it("count: 统计数量", () => {
       const dsl = transfer(`* | stats count(fieldName)`)

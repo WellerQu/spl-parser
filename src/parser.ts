@@ -16,6 +16,11 @@ function isPEGSyntaxError(error: any): error is PegjsError {
  */
 const parser = peg.generate(grammar.replace(`[ \r\n\t]`,  `[ \\r\\n\\t]`))
 
+/**
+ * 尝试将用户输入的SPL解析成抽象语法树, 若解析失败, 则根据语法规则返回对应的建议
+ * @param input 用户输入的SPL
+ * @returns 抽象语法树, 建议
+ */
 export function tryParse(input: string): [Ast | undefined, ExpectedItem[]] | never {
   try {
     return [parse(input), []]
@@ -29,6 +34,11 @@ export function tryParse(input: string): [Ast | undefined, ExpectedItem[]] | nev
   }
 }
 
+/**
+ * 将用户输入的SPL解析成抽象语法树, 若解析失败, 则报语法错误
+ * @param input 用户输入的SPL
+ * @returns 抽象语法树
+ */
 export function parse(input: string): Ast | never {
   return parser.parse(input)
 }

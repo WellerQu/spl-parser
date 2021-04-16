@@ -1,5 +1,19 @@
 
 declare namespace ast {
+  enum FieldValueType {
+    number = "number",
+    string = "string",
+    time = "time",
+    regexp = "regexp",
+    range = "range"
+  }
+
+  interface Field {
+    fieldName: string,
+    fieldType: keyof typeof FieldValueType
+    fieldValue?: unknown
+  }
+
   enum ConditionType {
     SingleKeyword = "SingleKeyword",
     UnionKeywords = "UnionKeywords",
@@ -18,24 +32,22 @@ declare namespace ast {
     Statistic = "Statistic",
   }
 
+
+  type AggrField = Pick<Field, 'fieldName' | 'fieldType'> & {
+    aggr: 'count' | 'max' | 'min' | 'sum' | 'avg',
+    filter?: Required<Field>,
+    alias?: string
+  }
+  type GroupField = Pick<Field, 'fieldName' | 'fieldType'> & {
+    sortLimits: {
+      fn: string, // 指标函数的别名
+      sn: number, // 限制分桶数据输出的数量, 不限时请输入0
+    } | null
+  }
   type OperationNodeType = {
     [OperationType.Statistic]: {
-      fields: {
-        aggr: 'count' | 'max' | 'min' | 'sum' | 'avg',
-        fieldName: string,
-        filter?: {
-          fieldName: string,
-          fieldValue: unknown
-        },
-        alias?: string
-      }[]
-      groupBy?: {
-        fieldName: string,
-        sortLimits: {
-          fn: string, // 指标函数的别名
-          sn: number, // 限制分桶数据输出的数量, 不限时请输入0
-        } | null
-      }[]
+      fields: AggrField[]
+      groupBy?: GroupField[]
       filters?: string[]
     },
   }
@@ -52,17 +64,18 @@ declare namespace ast {
     transaction = "transaction"
   }
 
+  type SortField = Pick<Field, 'fieldName' | 'fieldType'> & {
+    order?: "asc" | "desc"
+  }
+  type SourceField = Pick<Field, 'fieldName' | 'fieldValue'>
   type CommandNodeType = {
-    [CommandType.sort]: {
-      fieldName: string,
-      order?: "asc" | "desc"
-    }[]
+    [CommandType.sort]: SortField[]
     [CommandType.limit]: string
     [CommandType.head]: unknown
     [CommandType.tail]: unknown
     [CommandType.top]: unknown
     [CommandType.rare]: unknown
-    [CommandType.fields]: string[]
+    [CommandType.fields]: SourceField[]
     [CommandType.table]: unknown
     [CommandType.transaction]: unknown
   }
@@ -94,21 +107,5 @@ declare namespace ast {
 
   interface ConditionNode<T> extends Node<T, ConditionNodeType> {
     decorator: ("NOT")[]
-  }
-
-  enum FieldValueType {
-    number = "number",
-    string = "string",
-    time = "time",
-    regexp = "regexp",
-    range = "range"
-  }
-
-  interface Field {
-    fieldName: string,
-    fieldValue: {
-      type: keyof typeof FieldValueType
-      value: unknown
-    }
   }
 }

@@ -54,15 +54,17 @@ const groups2string = (query: Ast[0]): string => query.groups.map(group => {
       result.push(`"${condition.value}"`)
     }
     if (condition.type === "KeyValue") {
-      const { fieldName, fieldValue } = condition.value
-      if (fieldValue.type === 'string')
-        result.push(`${fieldName}:"${fieldValue.value}"`)
-      else if (fieldValue.type === 'number')
-        result.push(`${fieldName}:${fieldValue.value}`)
-      else if (fieldValue.type === 'regexp')
-        result.push(`${fieldName}:/${fieldValue.value}/`)
-      else if (fieldValue.type === 'range')
-        result.push(`${fieldName}:${fieldValue.value}`)
+      const { fieldName, fieldType, fieldValue } = condition.value
+      if (fieldType === 'string')
+        result.push(`${fieldName}:"${fieldValue}"`)
+      else if (fieldType === 'number')
+        result.push(`${fieldName}:${fieldValue}`)
+      else if (fieldType === 'regexp')
+        result.push(`${fieldName}:/${fieldValue}/`)
+      else if (fieldType === 'range')
+        result.push(`${fieldName}:${fieldValue}`)
+      else if (fieldType === 'time')
+        throw new Error('Not Implemented: field type is time')
     }
     if (condition.type === "Union") {
       result.push(groups2string(condition.value))
@@ -154,13 +156,13 @@ const resolveCommand: Resolver = ast => dsl => {
   // 解析命令
   for (const cmd of commands) {
     if (cmd.type === 'fields') {
-      dsl._source = ["_message", "_event_time"].concat(cmd.value)
+      dsl._source = ["_message", "_event_time"].concat(cmd.value.map(item => item.fieldName))
     } else if (cmd.type === 'head') {
-      throw new Error('Not Implemented: head')
+      throw new Error('Not Implemented: command is head')
     } else if (cmd.type === 'limit') {
       dsl.size = +cmd.value
     } else if (cmd.type === 'rare') {
-      throw new Error('Not Implemented: rare')
+      throw new Error('Not Implemented: command is rare')
     } else if (cmd.type === 'sort') {
       const sort: ESQuerySort[] = cmd.value.map<ESQuerySort>(item => ({
         [item.fieldName]: {
@@ -170,13 +172,13 @@ const resolveCommand: Resolver = ast => dsl => {
       }))
       dsl.sort = sort
     } else if (cmd.type === 'table') {
-      throw new Error('Not Implemented: table')
+      throw new Error('Not Implemented: command is table')
     } else if (cmd.type === 'tail') {
-      throw new Error('Not Implemented: tail')
+      throw new Error('Not Implemented: command is tail')
     } else if (cmd.type === 'top') {
-      throw new Error('Not Implemented: top')
+      throw new Error('Not Implemented: command is top')
     } else if (cmd.type === 'transaction') {
-      throw new Error('Not Implemented: transaction')
+      throw new Error('Not Implemented: command is transaction')
     } 
   }
 
