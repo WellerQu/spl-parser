@@ -106,7 +106,8 @@ declare namespace ast {
     rare = "rare",
     fields = "fields",
     table = "table",
-    transaction = "transaction"
+    transaction = "transaction",
+    eval = "eval"
   }
 
   /**
@@ -122,6 +123,8 @@ declare namespace ast {
     [CommandType.fields]: SourceField[]
     [CommandType.table]: unknown
     [CommandType.transaction]: unknown
+    // TODO
+    [CommandType.eval]: any
   }
 
   type Operation = ({

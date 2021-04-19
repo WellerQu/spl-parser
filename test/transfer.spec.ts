@@ -99,7 +99,7 @@ describe("字段检索", () => {
     const dsl = transfer(`NOT type=""`)
     expect(dsl.query.query_string.query).toBe(`NOT type_string:""`)
   })
-  
+
   it("nonExists 字段不存在", () => {
     expect(() => {
       transfer(`nonExists=2`)
@@ -136,13 +136,13 @@ describe("OR, AND, NOT", () => {
   })
 
   it("子查询", () => {
-    expect(() => { 
+    expect(() => {
       transfer(`type=abc AND (search host=123)`)
     }).toThrowError('尚未支持的查询条件 SubSearch')
   })
 })
 
-describe("通配符", () => { 
+describe("通配符", () => {
   const transfer = transferFactory()
   it("通配符 * 表示0个或多个字符", () => {
     const dsl = transfer(`type=*line*`)
@@ -173,12 +173,12 @@ describe("数字字段⽀持范围查询", () => {
   })
 
   it("⽅括号，花括号组合使⽤", () => {
-    { 
+    {
       const dsl = transfer(`grade=[50 TO 80}`)
       expect(dsl.query.query_string.query).toBe(`grade_number:[50 TO 80}`)
     }
 
-    { 
+    {
       const dsl = transfer(`grade={50 TO 80]`)
       expect(dsl.query.query_string.query).toBe(`grade_number:{50 TO 80]`)
     }
@@ -444,6 +444,11 @@ describe("高级查询", () => {
       parse(`* | eval newFieldName=abs(2*(3+4))`)
       parse(`* | eval newFieldName=max(2*(3+4), 2)`)
       parse(`* | eval newFieldName=min(2*(3+4), 2)`)
+    })
+
+    it('11', () => {
+      const dsl = transfer(`* | eval newFieldName=ceil(2*(3+4))`)
+      console.log(dsl, '--dsl---')
     })
 
     it("包含字段表达式", () => {

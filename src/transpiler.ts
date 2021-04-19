@@ -21,17 +21,17 @@ const EVENT_TIME = '_event_time'
 /**
  * 查询语句条件错误
  */
-export class ConditionError extends Error {}
+export class ConditionError extends Error { }
 
 /**
  * 操作错误
  */
-export class OperationError extends Error {}
+export class OperationError extends Error { }
 
 /**
  * 命令错误
  */
-export class CommandError extends Error {}
+export class CommandError extends Error { }
 
 /**
  * 转译函数
@@ -64,7 +64,7 @@ export function transpiler(ast: Ast): elasticsearch.ESQuery {
  * @param query 抽象语法树的查询段
  * @returns 查询语句
  */
-const groups2string = (query: Ast[0]): string => 
+const groups2string = (query: Ast[0]): string =>
   query.groups.map(group => {
     return group.conditions.map(condition => {
       const result = condition.decorator.includes('NOT') ? ['NOT'] : []
@@ -192,6 +192,27 @@ const resolveCommand: Resolver = ast => dsl => {
         }
       }))
       dsl.sort = sort
+    } else if (cmd.type === 'eval') {
+
+      console.log(cmd.value, '----eval-----')
+      // const script_fields = cmd.value.map(item => ({
+      //   [item.fieldName]: {
+      //     "script": {
+      //       "lang": "painless",
+      //       "source": "Math.ceil(2+(3+4))"
+      //     }
+      //   }
+      // }))
+
+      const script_fields = {
+        [cmd.value?.newFieldName]: {
+          "script": {
+            "lang": "painless",
+            "source": `Math.${cmd.value?.fn}(2+(3+4))`
+          }
+        }
+      }
+      dsl.script_fields = script_fields
     } else {
       throw new CommandError(`未支持翻译的命令: ${cmd.type}`)
     }
