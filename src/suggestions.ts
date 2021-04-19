@@ -5,7 +5,7 @@ type Code = string
  * 
  * 例如:
  * _exists_ "_exists_" = "_exists_"
- * <词法>    <CODE>     = <RULE>
+ * <词法>    <MAPPING>  = <RULE>
  */
 export const SUGGESTIONS: Record<Code, SuggestionItem | undefined> = {
   '_exists_': {
