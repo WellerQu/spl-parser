@@ -11,17 +11,29 @@ interface SuggestionItem {
    */
   tag: '关键词' | '符号' | '字段' | '函数' | '逻辑' | '算子',
   /**
-   * 与 PEGJS 中的词法映射码
+   * 与 PEGJS 中的词法映射
+   */
+  mapping: string,
+  /**
+   * 识别码
    */
   code: string,
   /**
    * 建议项描述
    */
-  description: string,
+  description?: string,
+  /**
+   * 语法
+   */
+  syntax?: string,
   /**
    * 建议项示例
    */
-  example: string
+  example?: string,
+  /**
+   * 是否禁用, 如果禁用则不会出现在提示列表中
+   */
+  disabled?: boolean
 }
 
 /**

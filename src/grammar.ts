@@ -75,7 +75,7 @@ Condition = decorator:(not:NOT Space+ { return not })? node:(
  */
 Keyword =
   singleKeyword:Identifier { return conditionNode('SingleKeyword', singleKeyword, []) }
-  / Quote unionKeyword:QuoteStr Quote { return conditionNode('UnionKeywords', unionKeyword, []) }
+  / Quote unionKeyword:QuoteStr? Quote { return conditionNode('UnionKeywords', unionKeyword, []) }
 
 /**
  * 键值对
@@ -84,7 +84,7 @@ KeyValue =
   fieldName:FieldName
   Space* Equal Space*
   field:(
-    Quote value:QuoteStr Quote { return fieldNode(fieldName, "string", value) }
+    Quote value:QuoteStr? Quote { return fieldNode(fieldName, "string", value) }
     / Slash value:RegExpStr Slash { return fieldNode(fieldName, "regexp", value) }
     / value:RangeValue { return fieldNode(fieldName, "range", value) }
     / value:Identifier { return fieldNode(fieldName, isNaN(value) ? "string" : "number", isNaN(value) ? value : +value) }
@@ -106,7 +106,7 @@ RangeValue =
 _Exist_ =
   _exists_ Space* Equal Space*
   field:(
-    Quote str:QuoteStr Quote { return fieldNode("_exists_", "string", str) }
+    Quote str:QuoteStr? Quote { return fieldNode("_exists_", "string", str) }
     / str:Identifier { return fieldNode("_exists_", "string", str) }
   ) { return conditionNode('KeyValue', field, []) }
 
@@ -213,7 +213,7 @@ Rare =
  * 限制返回数据字段命令
  */
 Fields =
-  FieldsF Space* L_M_Bracket Space* field:StringField moreFields:(Space* Comma Space* next:StringField { return next })* Space* R_M_Bracket { return cmdNode("fields", [field, ...moreFields]) }
+  FieldsF Space+ field:StringField moreFields:(Space* Comma Space* next:StringField { return next })* { return cmdNode("fields", [field, ...moreFields]) }
 
 Table =
   TableF Space+ field:StringField moreFields:(Space* Comma Space* next:StringField { return next })* { return cmdNode("table", [field, ...moreFields]) }
@@ -273,57 +273,57 @@ StringField =
 /**
  * 词法
  */
-_exists_ = "_" "exists" "_"
-Space "Space" = [ \r\n\t]
-AND = "AND"
-OR = "OR"
-NOT = "NOT"
-TO = "TO"
-Search = "search"
-Count = "count"
-Min = "min"
-Max = "max"
-Avg = "avg"
-Sum = "sum"
-DC = "dc"
-Ceil = "ceil"
-Floor = "floor"
-Abs = "abs"
-Eval = "eval"
-LimitN = "limit"
-HeadN = "head"
-TailN = "tail"
-TopNF = "top"
-RareNF = "rare"
-FilterF = "filter"
-FieldsF = "fields"
-TableF = "table"
-TransactionF = "transaction"
-SortBy = "sort by"
-By = "by"
-As = "as"
-Stats = "stats"
-Pipe = "|"
-Quote "双引号" = '"'
-QuoteStr = $([^"]*)
-Slash = "/"
-Comma = ","
-RegExpStr = $([^/]+)
-L_L_Bracket = "{"
-R_L_Bracket = "}"
-L_M_Bracket = "["
-R_M_Bracket = "]"
-L_S_Bracket = "("
-R_S_Bracket = ")"
-Equal = "="
-Gt = ">"
-Lt = "<"
-Plus = "+"
-Minus = "-"
-Times = "*"
-Num "数字" = $(minus:Minus? Space* n:$(Integer ("." Integer)?) { return minus? -n : n})
-Integer = $([0-9]+)
-FieldName "字段名称" = $([a-zA-Z@]+[a-zA-Z0-9]*)
-Identifier "通用标识符" = $([.0-9a-zA-Z\u4e00-\uffff_@?*]+)
+_exists_ "_exists_" = "_exists_"
+Space "space" = [ \r\n\t]
+AND "and" = "AND"
+OR "or" = "OR"
+NOT "not" = "NOT"
+TO "to" = "TO"
+Search "search" = "search"
+Count "count" = "count"
+Min "min" = "min"
+Max "max" = "max"
+Avg "avg" = "avg"
+Sum "sum" = "sum"
+DC "distinct_count" = "dc"
+Ceil "ceil" = "ceil"
+Floor "floor" = "floor"
+Abs "abs" = "abs"
+Eval "evaluation" = "eval"
+LimitN "limit" = "limit"
+HeadN "head" = "head"
+TailN "tail" = "tail"
+TopNF "top" = "top"
+RareNF "rare" = "rare"
+FilterF "filter" = "filter"
+FieldsF "fields" = "fields"
+TableF "table" = "table"
+TransactionF "transaction" = "transaction"
+SortBy "sort_by" = "sort by"
+By "group_by" = "by"
+As "alias" = "as"
+Stats "stats" = "stats"
+Pipe "pipe" = "|"
+Quote "quote" = '"'
+QuoteStr "quote_string" = $([^"]+)
+Slash "slash" = "/"
+Comma "comma" = ","
+RegExpStr "regexp" = $([^/]+)
+L_L_Bracket "L_L_Bracket" = "{"
+R_L_Bracket "R_L_Bracket" = "}"
+L_M_Bracket "L_M_Bracket" = "["
+R_M_Bracket "R_M_Bracket" = "]"
+L_S_Bracket "L_S_Bracket" = "("
+R_S_Bracket "R_S_Bracket" = ")"
+Equal "Equal" = "="
+Gt "greater_than" = ">"
+Lt "less_than" = "<"
+Plus "plus" = "+"
+Minus "minus" = "-"
+Times "times" = "*"
+Num "number" = $(minus:Minus? Space* n:$(Integer ("." Integer)?) { return minus? -n : n})
+Integer "integer" = $([0-9]+)
+FieldName "fieldName" = $([a-zA-Z@]+[a-zA-Z0-9]*)
+Identifier "identifier" = $([.0-9a-zA-Z\u4e00-\uffff_@?*]+)
 
 `

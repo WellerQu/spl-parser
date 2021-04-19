@@ -72,13 +72,13 @@ const groups2string = (query: Ast[0]): string =>
       if (condition.type === 'SingleKeyword') {
         result.push(condition.value)
       } else if (condition.type === 'UnionKeywords') {
-        result.push(`"${condition.value}"`)
+        result.push(`"${condition.value ?? ''}"`)
       } else if (condition.type === "KeyValue") {
         const { fieldType, fieldValue } = condition.value
         const fieldName = format(condition.value)
 
         if (fieldType === 'string')
-          result.push(`${fieldName}:"${fieldValue}"`)
+          result.push(`${fieldName}:"${fieldValue ?? ''}"`)
         else if (fieldType === 'number')
           result.push(`${fieldName}:${fieldValue}`)
         else if (fieldType === 'regexp')

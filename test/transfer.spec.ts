@@ -23,6 +23,11 @@ describe("全文检索", () => {
     expect(dsl.query.query_string.query).toBe(`"error is"`)
   })
 
+  it("空词组\"\"", () => {
+    const dsl = transfer(`""`)
+    expect(dsl.query.query_string.query).toBe(`""`)
+  })
+
   it("中文", () => {
     const dsl = transfer(`中文`)
     expect(dsl.query.query_string.query).toBe(`中文`)
@@ -84,11 +89,21 @@ describe("字段检索", () => {
     }).toThrow('字段 "type" 的类型 "[string]" 不支持此操作')
 
   })
+
+  it("空字段值", () => {
+    const dsl = transfer(`type=""`)
+    expect(dsl.query.query_string.query).toBe(`type_string:""`)
+  })
   
   it("nonExists 字段不存在", () => {
     expect(() => {
       transfer(`nonExists=2`)
     }).toThrow('字段 "nonExists" 不存在')
+  })
+
+  it('_exists_=空字段名称', () => {
+    const dsl = transfer(`_exists_=""`)
+    expect(dsl.query.query_string.query).toBe(`_exists_:""`)
   })
 })
 
@@ -404,7 +419,7 @@ describe("高级查询", () => {
     })
 
     it("fields对搜索结果的字段进⾏挑选", () => {
-      const dsl = transfer(`* | fields [path,hostname]`)
+      const dsl = transfer(`* | fields path,hostname`)
       expect(dsl._source).toEqual(["_message", "_event_time", "path", "hostname"])
     })
   })
