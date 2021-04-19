@@ -1,3 +1,5 @@
+import { tryParse } from "./parser"
+
 type Code = string
 
 /**
@@ -424,10 +426,37 @@ export const SUGGESTIONS: Record<Code, SuggestionItem | undefined> = {
     mapping: 'fieldName',
     code: '',
   },
+  'fieldValue': {
+    label: '可选字段值',
+    tag: '通用',
+    mapping: 'fieldValue',
+    code: ''
+  }, 
   'identifier': {
     label: '通用标识符',
-    tag: '字段',
+    tag: '通用',
     mapping: 'identifier',
     code: ''
   }
+}
+
+/**
+ * 根据用户的输入, 提供接下来的输入建议
+ * @param input 用户输入 SPL
+ * @returns 建议列表
+ */
+export function getSuggestions(input: string): SuggestionItem[] {
+  const items: SuggestionItem[] = []
+
+  const [, suggestionMetadata] = tryParse(input)
+  for (const meta of suggestionMetadata) {
+    const suggestion = SUGGESTIONS[meta.description]
+    if (!suggestion) {
+      continue
+    }
+
+    items.push(suggestion)
+  }
+
+  return items
 }

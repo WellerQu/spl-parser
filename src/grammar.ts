@@ -87,7 +87,7 @@ KeyValue =
     Quote value:QuoteStr? Quote { return fieldNode(fieldName, "string", value) }
     / Slash value:RegExpStr Slash { return fieldNode(fieldName, "regexp", value) }
     / value:RangeValue { return fieldNode(fieldName, "range", value) }
-    / value:Identifier { return fieldNode(fieldName, isNaN(value) ? "string" : "number", isNaN(value) ? value : +value) }
+    / value:FieldValue { return fieldNode(fieldName, isNaN(value) ? "string" : "number", isNaN(value) ? value : +value) }
   ) { return conditionNode('KeyValue', field, []) }
 
 /**
@@ -324,6 +324,7 @@ Times "times" = "*"
 Num "number" = $(minus:Minus? Space* n:$(Integer ("." Integer)?) { return minus? -n : n})
 Integer "integer" = $([0-9]+)
 FieldName "fieldName" = $([a-zA-Z@]+[a-zA-Z0-9]*)
+FieldValue "fieldValue" = $([^ )]+)
 Identifier "identifier" = $([.0-9a-zA-Z\u4e00-\uffff_@?*]+)
 
 `
