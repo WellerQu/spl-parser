@@ -1,7 +1,7 @@
 import { pipe } from './utils/pipe'
 import { format } from './utils/format'
 
-type Resolver = (ast: Ast) => (dsl: ESQuery) => ESQuery
+type Resolver = (ast: Ast) => (dsl: elasticsearch.ESQuery) => elasticsearch.ESQuery
 
 /**
  * 最大聚合范围
@@ -38,7 +38,7 @@ export class CommandError extends Error {}
  * @param ast 抽象语法树
  * @returns ElasticSearch DSL
  */
-export function transpiler(ast: Ast): ESQuery {
+export function transpiler(ast: Ast): elasticsearch.ESQuery {
   const resolve = pipe(
     resolveQuery(ast),
     resolveOperation(ast),
@@ -135,7 +135,7 @@ const resolveOperation: Resolver = ast => dsl => {
 
   const { fields, groupBy, } = operation.value
   const [first] = fields
-  const initialTerm: ESQueryStatisticTerm = {
+  const initialTerm: elasticsearch.ESQueryStatisticTerm = {
     field: format(first)
   }
 
@@ -143,12 +143,12 @@ const resolveOperation: Resolver = ast => dsl => {
     initialTerm.size = AGGR_MAX_SIZE
   }
 
-  const initialAggr: ESQueryStatisticAggr = {
+  const initialAggr: elasticsearch.ESQueryStatisticAggr = {
     [first.alias ?? `${first.aggr}(${first.fieldName})`]: {
       [first.aggr === 'count' ? 'terms' : first.aggr]: initialTerm
     }
   }
-  const aggs: ESQuery['aggs'] = (groupBy ?? []).reduceRight<ESQueryStatisticAggr>((aggs, item) => {
+  const aggs: elasticsearch.ESQuery['aggs'] = (groupBy ?? []).reduceRight<elasticsearch.ESQueryStatisticAggr>((aggs, item) => {
     const fieldName = format(item)
 
     return {
@@ -185,7 +185,7 @@ const resolveCommand: Resolver = ast => dsl => {
     } else if (cmd.type === 'limit') {
       dsl.size = +cmd.value
     } else if (cmd.type === 'sort') {
-      const sort: ESQuerySort[] = cmd.value.map<ESQuerySort>(item => ({
+      const sort: elasticsearch.ESQuerySort[] = cmd.value.map<elasticsearch.ESQuerySort>(item => ({
         [item.fieldName]: {
           order: item.order ?? "desc",
           'unmapped_type': 'string'
@@ -213,7 +213,7 @@ const resolveCommand: Resolver = ast => dsl => {
  * 从DSL中移除 limit 相关字段(from, size)
  * @param dsl 待加工的 DSL 语句
  */
-export const DSLRemovePagination = (dsl: ESQuery): ESQuery => {
+export const DSLRemovePagination = (dsl: elasticsearch.ESQuery): elasticsearch.ESQuery => {
   dsl.from = undefined
   dsl.size = undefined
 
@@ -224,7 +224,7 @@ export const DSLRemovePagination = (dsl: ESQuery): ESQuery => {
  * 从DSL语句中移除 _source 字段 
  * @param dsl 待加工的 DSL 语句
  */
-export const DSLRemoveSource = (dsl: ESQuery): ESQuery => {
+export const DSLRemoveSource = (dsl: elasticsearch.ESQuery): elasticsearch.ESQuery => {
   dsl._source = undefined
 
   return dsl
@@ -234,7 +234,7 @@ export const DSLRemoveSource = (dsl: ESQuery): ESQuery => {
  * 从DSL语句中移除 aggs 字段
  * @param dsl 待加工的 DSL 语句
  */
-export const DSLRemoveAggs = (dsl: ESQuery): ESQuery => {
+export const DSLRemoveAggs = (dsl: elasticsearch.ESQuery): elasticsearch.ESQuery => {
   dsl.aggs = undefined
 
   return dsl
@@ -244,7 +244,7 @@ export const DSLRemoveAggs = (dsl: ESQuery): ESQuery => {
  * 从DSL语句中移除sort字段
  * @param dsl 代加工的 DSL 语句
  */
-export const DSLRemoveSort = (dsl: ESQuery): ESQuery => {
+export const DSLRemoveSort = (dsl: elasticsearch.ESQuery): elasticsearch.ESQuery => {
   dsl.sort = undefined
 
   return dsl
@@ -254,7 +254,7 @@ export const DSLRemoveSort = (dsl: ESQuery): ESQuery => {
  * 从DSL语句中移除script_fields字段
  * @param dsl 待加工的 DSL 语句
  */
-export const DSLRemoveScriptField = (dsl: ESQuery): ESQuery => {
+export const DSLRemoveScriptField = (dsl: elasticsearch.ESQuery): elasticsearch.ESQuery => {
   dsl['script_fields'] = undefined
 
   return dsl

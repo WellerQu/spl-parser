@@ -1,55 +1,48 @@
-interface ESQuerySort {
-  [key: string]: { order: 'asc' | 'desc', 'unmapped_type': 'long' | 'string' }
-}
-
-interface ESQueryStatisticTerm {
-  field: string,
-  size?: number
-}
-
-enum ESQueryStatisticAggrType {
-  terms = 'terms', // case when aggr is count
-  max = 'max',
-  min = 'min',
-  sum = 'sum',
-  avg = 'avg'
-}
-
-interface ESQueryStatisticAggr {
-  // 应该只有一个 key
-  [key: string]: {
-    [key: ESQueryStatisticAggrType]: ESQueryStatisticTerm,
-    aggs?: ESQueryStatisticAggr
-  }
-}
-
-interface ESQuery {
-  // NOTE: ES DSL 要求的命名风格
-  query: {
-    'query_string': {
-      query: string,
-      'default_field': '_message'
-    }
-  },
-  from?: number
-  size?: number
-  _source?: string[]
-  aggs?: ESQueryStatisticAggr,
-  sort?: ESQuerySort[] | undefined
-  'script_fields'?: unknown
-}
-
+/**
+ * 建议项
+ */
 interface SuggestionItem {
+  /**
+   * 人类可读名称
+   */
   label: string,
+  /**
+   * 建议项的类型
+   */
+  tag: '关键词' | '符号' | '字段' | '函数' | '逻辑' | '算子',
+  /**
+   * 与 PEGJS 中的词法映射码
+   */
   code: string,
+  /**
+   * 建议项描述
+   */
   description: string,
+  /**
+   * 建议项示例
+   */
   example: string
 }
 
+/**
+ * 抽象语法树
+ */
 type Ast = [
+  /**
+   * 查询语句段
+   */
   ast.Query,
+  /**
+   * 查询结果操作段
+   */
   ast.Operation[],
+  /**
+   * 查询结果命令段
+   */
   ast.Command[]
 ]
 
+/**
+ * 字段类型信息
+ */
 type TypeInfo = keyof typeof ast.FieldValueType

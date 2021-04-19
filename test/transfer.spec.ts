@@ -1,5 +1,6 @@
 /// <reference types="../typings" />
 /// <reference types="../typings/ast" />
+/// <reference types="../typings/elasticsearch" />
 
 import { parse } from '../src/parser'
 import { transferFactory } from '../src'

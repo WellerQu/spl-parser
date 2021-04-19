@@ -1,5 +1,8 @@
 
 declare namespace ast {
+  /**
+   * 字段值类型枚举
+   */
   enum FieldValueType {
     number = "number",
     string = "string",
@@ -8,12 +11,52 @@ declare namespace ast {
     range = "range"
   }
 
+  /**
+   * 字段
+   */
   interface Field {
     fieldName: string,
     fieldType: keyof typeof FieldValueType
     fieldValue?: unknown
   }
 
+  /**
+   * 聚合字段, 字段的一种
+   */
+  type AggrField = Pick<Field, 'fieldName' | 'fieldType'> & {
+    aggr: 'count' | 'max' | 'min' | 'sum' | 'avg',
+    filter?: Required<Field>,
+    alias?: string
+  }
+
+  /**
+   * 分组字段, 字段的一种
+   */
+  type GroupField = Pick<Field, 'fieldName' | 'fieldType'> & {
+    sortLimits: {
+      fn: string, // 指标函数的别名
+      sn: number, // 限制分桶数据输出的数量, 不限时请输入0
+    } | null
+  }
+
+  /**
+   * 过滤字段, 字段的一种
+   */
+  type FilterField = Required<Field> & { operator: string }
+
+  /**
+   * 排序字段, 字段的一种
+   */
+  type SortField = Pick<Field, 'fieldName' | 'fieldType'> & { order?: "asc" | "desc" }
+  
+  /**
+   * 筛选字段, 字段的一种
+   */
+  type SourceField = Pick<Field, 'fieldName' | 'fieldType'>
+
+  /**
+   * 条件类型枚举
+   */
   enum ConditionType {
     SingleKeyword = "SingleKeyword",
     UnionKeywords = "UnionKeywords",
@@ -22,6 +65,9 @@ declare namespace ast {
     SubSearch = "SubSearch"
   }
 
+  /**
+   * 条件抽象语法树节点数据类型映射
+   */
   type ConditionNodeType = {
     [ConditionType.KeyValue]: Field,
     [ConditionType.SingleKeyword]: string,
@@ -30,23 +76,16 @@ declare namespace ast {
     [ConditionType.SubSearch]: unknown
   }
 
+  /**
+   * 操作类型枚举
+   */
   enum OperationType {
     Statistic = "Statistic",
   }
 
-
-  type AggrField = Pick<Field, 'fieldName' | 'fieldType'> & {
-    aggr: 'count' | 'max' | 'min' | 'sum' | 'avg',
-    filter?: Required<Field>,
-    alias?: string
-  }
-  type GroupField = Pick<Field, 'fieldName' | 'fieldType'> & {
-    sortLimits: {
-      fn: string, // 指标函数的别名
-      sn: number, // 限制分桶数据输出的数量, 不限时请输入0
-    } | null
-  }
-  type FilterField = Required<Field> & { operator: string }
+  /**
+   * 操作抽象语法树节点数据类型映射
+   */
   type OperationNodeType = {
     [OperationType.Statistic]: {
       fields: AggrField[]
@@ -55,6 +94,9 @@ declare namespace ast {
     },
   }
 
+  /**
+   * 命令类型映射
+   */
   enum CommandType {
     sort = "sort",
     limit = "limit",
@@ -67,10 +109,9 @@ declare namespace ast {
     transaction = "transaction"
   }
 
-  type SortField = Pick<Field, 'fieldName' | 'fieldType'> & {
-    order?: "asc" | "desc"
-  }
-  type SourceField = Pick<Field, 'fieldName' | 'fieldType'>
+  /**
+   * 命令抽象语法树节点数据类型映射
+   */
   type CommandNodeType = {
     [CommandType.sort]: SortField[]
     [CommandType.limit]: string
@@ -95,19 +136,31 @@ declare namespace ast {
     [key in keyof typeof ConditionType]: ConditionNode<key>
   })[keyof typeof ConditionType]
 
+  /**
+   * 查询语句
+   */
   interface Query {
     groups: Group[]
   }
 
+  /**
+   * 查询语句中条件分组, 组与组之间使用 "OR" 连接
+   */
   interface Group {
     conditions: Condition[]
   }
 
+  /**
+   * 抽象语法树节点
+   */
   interface Node<T, P = unknown> {
     type: T,
     value: P[T]
   }
 
+  /**
+   * 抽象语法树条件节点, 抽象语法树节点的一种
+   */
   interface ConditionNode<T> extends Node<T, ConditionNodeType> {
     decorator: ("NOT")[]
   }
