@@ -94,6 +94,11 @@ describe("字段检索", () => {
     const dsl = transfer(`type=""`)
     expect(dsl.query.query_string.query).toBe(`type_string:""`)
   })
+
+  it('查询非空字段', () => {
+    const dsl = transfer(`NOT type=""`)
+    expect(dsl.query.query_string.query).toBe(`NOT type_string:""`)
+  })
   
   it("nonExists 字段不存在", () => {
     expect(() => {
