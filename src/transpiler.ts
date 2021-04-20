@@ -253,7 +253,8 @@ const resolveCommand: Resolver = ast => dsl => {
       dsl.sort = sort
     } else if (cmd.type === 'eval') {
 
-      const operator = cmd.value.params[1] ? `${parseOperator(cmd.value.params[0])}, ${parseOperator(cmd.value.params[1])}` : parseOperator(cmd.value.params[0])
+      const operator = cmd.value.params[1] ? `${parseOperator(cmd.value.params[0])}, ${parseOperator(cmd.value.params[1])}` :
+        parseOperator(cmd.value.params[0])
       const script_fields = {
         [cmd.value?.newFieldName]: {
           "script": {

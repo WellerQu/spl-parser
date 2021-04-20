@@ -48,11 +48,29 @@ declare namespace ast {
    * 排序字段, 字段的一种
    */
   type SortField = Pick<Field, 'fieldName' | 'fieldType'> & { order?: "asc" | "desc" }
-  
+
   /**
    * 筛选字段, 字段的一种
    */
   type SourceField = Pick<Field, 'fieldName' | 'fieldType'>
+
+
+  /**
+   * 加减乘除运算语法树
+   */
+  type OperatorAst = {
+    type: 'fieldName' | 'number' | 'operator'
+    value: string
+  }
+
+  /**
+   * eval字段
+   */
+  type EvalField = {
+    [propName: string]: string
+    fn: 'ceil' | 'floor' | 'max' | 'min'
+    params: OperatorAst[]
+  }
 
   /**
    * 条件类型枚举
@@ -123,8 +141,7 @@ declare namespace ast {
     [CommandType.fields]: SourceField[]
     [CommandType.table]: unknown
     [CommandType.transaction]: unknown
-    // TODO
-    [CommandType.eval]: any
+    [CommandType.eval]: evalField
   }
 
   type Operation = ({
