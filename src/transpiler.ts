@@ -169,6 +169,65 @@ const resolveOperation: Resolver = ast => dsl => {
 
 /**
  * 
+ * @param eval相关函数的运算式抽象语法树
+ * @returns string eval相关函数的运算式
+ */
+
+interface operatorAst {
+  type: 'fieldName' | 'number' | 'operator'
+  value: string
+}
+
+const parseOperator = (ast: operatorAst[] | operatorAst): string => {
+
+  let operator = ''
+  function loop(arr: operatorAst[], end = '') {
+
+    arr.forEach((item: operatorAst, index: number) => {
+
+      let cur = ''
+      if (Array.isArray(item) && item.length) {
+
+        const firstItem = item[0].type
+        const secItem = item[1]
+
+        if (firstItem === 'number' && ['+', '-'].includes(secItem.value)) {
+          operator += '('
+          loop(item, ')')
+        } else {
+          loop(item)
+        }
+      }
+
+      if (item.type === 'fieldName') {
+        cur = `doc['${item.value}_number'].value`
+        operator += cur
+
+      } else if (['operator', 'number'].includes(item.type)) {
+        cur = item.value
+        operator += cur
+      }
+    })
+    operator += end
+    return operator
+  }
+
+  if (Array.isArray(ast)) {
+    loop(ast)
+  } else {
+    if (ast.type === 'fieldName') {
+      operator += `doc['${ast.value}_number'].value`
+
+    } else if (['operator', 'number'].includes(ast.type)) {
+      operator += ast.value
+    }
+  }
+
+  return operator
+}
+
+/**
+ * 
  * @param ast 抽象语法树
  * @returns ES DSL
  */
@@ -194,21 +253,12 @@ const resolveCommand: Resolver = ast => dsl => {
       dsl.sort = sort
     } else if (cmd.type === 'eval') {
 
-      console.log(cmd.value, '----eval-----')
-      // const script_fields = cmd.value.map(item => ({
-      //   [item.fieldName]: {
-      //     "script": {
-      //       "lang": "painless",
-      //       "source": "Math.ceil(2+(3+4))"
-      //     }
-      //   }
-      // }))
-
+      const operator = cmd.value.params[1] ? `${parseOperator(cmd.value.params[0])}, ${parseOperator(cmd.value.params[1])}` : parseOperator(cmd.value.params[0])
       const script_fields = {
         [cmd.value?.newFieldName]: {
           "script": {
             "lang": "painless",
-            "source": `Math.${cmd.value?.fn}(2+(3+4))`
+            "source": `Math.${cmd.value?.fn}(${operator})`
           }
         }
       }

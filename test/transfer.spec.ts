@@ -438,25 +438,130 @@ describe("高级查询", () => {
   })
 
   describe("eval计算", () => {
-    it("不含字段表达式", () => {
-      parse(`* | eval newFieldName=ceil(2*(3+4))`)
-      parse(`* | eval newFieldName=floor(2*(3+4))`)
-      parse(`* | eval newFieldName=abs(2*(3+4))`)
-      parse(`* | eval newFieldName=max(2*(3+4), 2)`)
-      parse(`* | eval newFieldName=min(2*(3+4), 2)`)
-    })
 
-    it('11', () => {
-      const dsl = transfer(`* | eval newFieldName=ceil(2*(3+4))`)
-      console.log(dsl, '--dsl---')
+    it('不含字段表达式', () => {
+      const dslCeil = transfer(`* | eval newFieldName=ceil(2*(3+4))`)
+      expect(dslCeil.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.ceil(2*(3+4))"
+          }
+        }
+      })
+
+      const dslFloor = transfer(`* | eval newFieldName=floor(2*(3+4))`)
+      expect(dslFloor.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.floor(2*(3+4))"
+          }
+        }
+      })
+
+      const dslAbs = transfer(`* | eval newFieldName=abs(2*(3+4))`)
+      expect(dslAbs.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.abs(2*(3+4))"
+          }
+        }
+      })
+
+      const dslMax = transfer(`* | eval newFieldName=max(2*(3+4))`)
+      expect(dslMax.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.max(2*(3+4))"
+          }
+        }
+      })
+
+      const dslMin = transfer(`* | eval newFieldName=min(2*(3+4))`)
+      expect(dslMin.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.min(2*(3+4))"
+          }
+        }
+      })
     })
 
     it("包含字段表达式", () => {
-      parse(`* | eval newFieldName=ceil(fieldName*(3+4))`)
-      parse(`* | eval newFieldName=floor(fieldName*(3+4))`)
-      parse(`* | eval newFieldName=abs(fieldName*(3+4))`)
-      parse(`* | eval newFieldName=max(fieldName*(3+4), 2)`)
-      parse(`* | eval newFieldName=min(fieldName*(3+4), 3)`)
+
+      const dslCeil = transfer(`* | eval newFieldName=ceil(fieldName*(3+4))`)
+      expect(dslCeil.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.ceil(doc['fieldName_number'].value*(3+4))"
+          }
+        }
+      })
+
+      const dslFloor = transfer(`* | eval newFieldName=floor(fieldName*(3+4))`)
+      expect(dslFloor.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.floor(doc['fieldName_number'].value*(3+4))"
+          }
+        }
+      })
+
+      const dslAbs = transfer(`* | eval newFieldName=abs(fieldName*(3+4))`)
+      expect(dslAbs.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.abs(doc['fieldName_number'].value*(3+4))"
+          }
+        }
+      })
+
+      const dslMax = transfer(`* | eval newFieldName=max(fieldName*(3+4), 2)`)
+      expect(dslMax.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.max(doc['fieldName_number'].value*(3+4), 2)"
+          }
+        }
+      })
+
+      const dslMin = transfer(`* | eval newFieldName=min(fieldName*(3+4), 2)`)
+      expect(dslMin.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.min(doc['fieldName_number'].value*(3+4), 2)"
+          }
+        }
+      })
+
+      const dslBinaryMin = transfer(`* | eval newFieldName=min(fieldName*(3+4), fieldName2)`)
+      expect(dslBinaryMin.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.min(doc['fieldName_number'].value*(3+4), doc['fieldName2_number'].value)"
+          }
+        }
+      })
+
+      const dslBinaryMax = transfer(`* | eval newFieldName=max(fieldName*(3+4), fieldName2*(1+2))`)
+      expect(dslBinaryMax.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.max(doc['fieldName_number'].value*(3+4), doc['fieldName2_number'].value*(1+2))"
+          }
+        }
+      })
     })
   })
 })
