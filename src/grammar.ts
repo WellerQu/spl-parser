@@ -244,7 +244,7 @@ Evaluation =
  * 一元操作
  */
 Unary =
-  fn:(Ceil/Floor/Abs/Max/Min) Space* L_S_Bracket param:Expr R_S_Bracket { return { fn, params: [param]} }
+  fn:(Ceil/Floor/Abs) Space* L_S_Bracket param:Expr R_S_Bracket { return { fn, params: [param]} }
 
 /**
  * 二元操作

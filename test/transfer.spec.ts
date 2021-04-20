@@ -469,26 +469,6 @@ describe("高级查询", () => {
           }
         }
       })
-
-      const dslMax = transfer(`* | eval newFieldName=max(2*(3+4))`)
-      expect(dslMax.script_fields).toEqual({
-        newFieldName: {
-          script: {
-            "lang": "painless",
-            "source": "Math.max(2*(3+4))"
-          }
-        }
-      })
-
-      const dslMin = transfer(`* | eval newFieldName=min(2*(3+4))`)
-      expect(dslMin.script_fields).toEqual({
-        newFieldName: {
-          script: {
-            "lang": "painless",
-            "source": "Math.min(2*(3+4))"
-          }
-        }
-      })
     })
 
     it("包含字段表达式", () => {
