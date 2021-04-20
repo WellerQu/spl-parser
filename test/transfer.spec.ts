@@ -523,6 +523,16 @@ describe("高级查询", () => {
         }
       })
 
+      const dslMinusMin = transfer(`* | eval newFieldName=min(-1+2, -1)`)
+      expect(dslMinusMin.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.min(-1+2, -1)"
+          }
+        }
+      })
+
       const dslBinaryMin = transfer(`* | eval newFieldName=min(fieldName*(3+4), fieldName2)`)
       expect(dslBinaryMin.script_fields).toEqual({
         newFieldName: {
@@ -542,6 +552,7 @@ describe("高级查询", () => {
           }
         }
       })
+
     })
   })
 })

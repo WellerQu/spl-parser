@@ -271,6 +271,12 @@ return {
    value: num.join('')
  }
 }
+/ '-' num:Integer {
+  return {
+    "type": "number",
+    value : '-'+num
+  }
+}
 / name:FieldName + {
   return {
    type: 'fieldName',
