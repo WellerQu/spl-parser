@@ -4,6 +4,7 @@ import { parse } from './parser'
 import { typeCheck } from './typeCheck'
 import { transpiler, DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource } from './transpiler'
 
+export { getSuggestions } from './suggestions'
 export interface TransferOptions {
   /**
    * 类型映射关系, 若不提供此配置项, 则不会进行类型检查
