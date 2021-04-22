@@ -193,8 +193,6 @@ const parseOperator = (ast: ast.EvalExprAstNode | ast.EvalExprAstNode[]): string
         }
       }
 
-
-
       if (item.type === 'field') {
         cur = `doc['${item.value.fieldName}_${item.value.fieldType}'].value`
         operator += cur

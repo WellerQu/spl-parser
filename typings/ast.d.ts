@@ -64,7 +64,7 @@ declare namespace ast {
   }
 
   /**
-  * 运算语法树节点
+  * 运算语法树field节点
   */
   type fieldNode = {
     type: 'field'
@@ -72,12 +72,12 @@ declare namespace ast {
   }
 
   /**
-   * eval表达式相关函数参数
+   * eval表达式运算语法树节点
    */
   type EvalExprAstNode = exprNode | fieldNode
 
   /**
-   * 加减乘除运算语法树
+   * eval表达式语法树节点
    */
   type EvalExpr = {
     [fieldName: string]: string
