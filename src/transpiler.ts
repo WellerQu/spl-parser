@@ -249,7 +249,7 @@ const resolveCommand: Resolver = ast => dsl => {
       const operator = cmd.value.params.n2 ? `${parseExpr(cmd.value.params.n1)}, ${parseExpr(cmd.value.params.n2)}` :
         parseExpr(cmd.value.params.n1)
 
-      const script_fields: elasticsearch.ScriptFields = {
+      const scriptFields: elasticsearch.ScriptFields = {
         [cmd.value.newFieldName]: {
           "script": {
             "lang": "painless",
@@ -257,7 +257,7 @@ const resolveCommand: Resolver = ast => dsl => {
           }
         }
       }
-      dsl.script_fields = script_fields
+      dsl['script_fields'] = scriptFields
     } else {
       throw new CommandError(`未支持翻译的命令: ${cmd.type}`)
     }
