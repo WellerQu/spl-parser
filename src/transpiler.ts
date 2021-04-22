@@ -173,12 +173,12 @@ const resolveOperation: Resolver = ast => dsl => {
  * @returns string eval相关函数的运算式
  */
 
-const parseExpr = (ast: ast.EvalExprAstNode | ast.EvalExprAstNode[]): string => {
+const parseExpr = (ast: ast.ExprAstNode | ast.ExprAstNode[]): string => {
 
   let operator = ''
-  function loop(arr: ast.EvalExprAstNode[], end = '') {
+  function loop(arr: ast.ExprAstNode[], end = '') {
 
-    arr.forEach((item: ast.EvalExprAstNode) => {
+    arr.forEach((item: ast.ExprAstNode) => {
 
       let cur = ''
       if (Array.isArray(item) && item.length) {
@@ -249,7 +249,7 @@ const resolveCommand: Resolver = ast => dsl => {
       const operator = cmd.value.params.n2 ? `${parseExpr(cmd.value.params.n1)}, ${parseExpr(cmd.value.params.n2)}` :
         parseExpr(cmd.value.params.n1)
 
-      const script_fields: elasticsearch.script_fields = {
+      const script_fields: elasticsearch.ScriptFields = {
         [cmd.value.newFieldName]: {
           "script": {
             "lang": "painless",
