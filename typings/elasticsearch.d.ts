@@ -24,7 +24,7 @@ declare namespace elasticsearch {
     }
   }
 
-  interface script_fields {
+  interface ScriptFields {
     [newFieldName: string]: {
       script: {
         lang: 'painless',
@@ -46,6 +46,6 @@ declare namespace elasticsearch {
     _source?: string[]
     aggs?: ESQueryStatisticAggr,
     sort?: ESQuerySort[] | undefined
-    'script_fields'?: script_fields
+    'script_fields'?: ScriptFields
   }
 }

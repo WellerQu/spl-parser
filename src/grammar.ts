@@ -257,12 +257,12 @@ Binary =
  */
  Expr =
  lTerm:Term expr:(Space* operator:PlusOrMinus Space* rTerm:Term { return [operator, rTerm]})* {
- return  expr.length ? [lTerm, ...expr].flat() : lTerm
+ return  expr.length ? [lTerm].concat(...expr) : lTerm
 }
 
 Term =
  lFactor:Factor expr:(MultiplyOrDivide Factor)* {
- return  expr.length ? [lFactor, ...expr].flat() : lFactor
+ return  expr.length ? [lFactor].concat(...expr) : lFactor
 }
 
 Factor = L_S_Bracket Space* Expr:(Expr) Space* R_S_Bracket { return Expr } 
