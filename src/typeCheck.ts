@@ -4,12 +4,12 @@ import { pipe } from './utils/pipe'
 /**
  * 字段类型错误
  */
-export class FieldTypeError extends Error {}
+export class FieldTypeError extends Error { }
 
 /**
  * 抽象语法树错误
  */
-export class AstError extends Error {}
+export class AstError extends Error { }
 
 /**
  * 为抽象语法树中的字段进行类型检查, 若出现不符合预期的类型, 则类型错误
@@ -35,7 +35,8 @@ export const typeCheck = (mapping?: Map<string, TypeInfo[]>): (ast: Ast) => Ast 
  * @param mapping 字段类型映射关系
  */
 function checkTypeBaseOnMapping(field: ast.Field, mapping: Map<string, TypeInfo[]>): void {
-  // 字段不存在
+
+  // // 字段不存在
   if (!mapping.has(field.fieldName)) {
     throw new FieldTypeError(`字段 "${field.fieldName}" 不存在`)
   }
@@ -156,10 +157,26 @@ const checkCommands: Checker = mapping => ast => {
       for (const field of command.value) {
         checkTypeBaseOnMapping(field, mapping)
       }
+    } else if (command.type === 'eval') {
+      const params = command.value.params
+      ergodic(params.n2 ? [params.n1, params.n2] : [params.n1], mapping)
     } else {
       throw new AstError(`未支持检查的命令: ${command.type}`)
     }
   }
 
   return ast
+}
+
+/**
+ * 递归检查运算表达式字段
+* */
+function ergodic(arr: ast.EvalExprAstNode[] | ast.EvalExprAstNode[][], mapping: Map<string, TypeInfo[]>) {
+  arr.forEach((item: ast.EvalExprAstNode | ast.EvalExprAstNode[]) => {
+    if (Array.isArray(item)) {
+      ergodic(item, mapping)
+    } else if (!Array.isArray(item) && item.type === 'field') {
+      checkTypeBaseOnMapping(item.value, mapping)
+    }
+  })
 }

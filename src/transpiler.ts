@@ -21,17 +21,17 @@ const EVENT_TIME = '_event_time'
 /**
  * 查询语句条件错误
  */
-export class ConditionError extends Error {}
+export class ConditionError extends Error { }
 
 /**
  * 操作错误
  */
-export class OperationError extends Error {}
+export class OperationError extends Error { }
 
 /**
  * 命令错误
  */
-export class CommandError extends Error {}
+export class CommandError extends Error { }
 
 /**
  * 转译函数
@@ -64,7 +64,7 @@ export function transpiler(ast: Ast): elasticsearch.ESQuery {
  * @param query 抽象语法树的查询段
  * @returns 查询语句
  */
-const groups2string = (query: Ast[0]): string => 
+const groups2string = (query: Ast[0]): string =>
   query.groups.map(group => {
     return group.conditions.map(condition => {
       const result = condition.decorator.includes('NOT') ? ['NOT'] : []
@@ -169,6 +169,58 @@ const resolveOperation: Resolver = ast => dsl => {
 
 /**
  * 
+ * @param eval相关函数的运算式抽象语法树
+ * @returns string eval相关函数的运算式
+ */
+
+const parseExpr = (ast: ast.EvalExprAstNode | ast.EvalExprAstNode[]): string => {
+
+  let operator = ''
+  function loop(arr: ast.EvalExprAstNode[], end = '') {
+
+    arr.forEach((item: ast.EvalExprAstNode) => {
+
+      let cur = ''
+      if (Array.isArray(item) && item.length) {
+
+        const firstItem = item[0].type
+        const secItem = item[1]
+        if (firstItem === 'number' && ['+', '-'].includes(secItem?.value)) {
+          operator += '('
+          loop(item, ')')
+        } else {
+          loop(item)
+        }
+      }
+
+      if (item.type === 'field') {
+        cur = `doc['${item.value.fieldName}_${item.value.fieldType}'].value`
+        operator += cur
+
+      } else if (['operator', 'number'].includes(item.type)) {
+        cur = item.value
+        operator += cur
+      }
+    })
+    operator += end
+    return operator
+  }
+
+  if (Array.isArray(ast)) {
+    loop(ast)
+  } else {
+    if (ast.type === 'field') {
+      operator += `doc['${ast.value.fieldName}_${ast.value.fieldType}'].value`
+    } else if (['operator', 'number'].includes(ast.type)) {
+      operator += ast.value
+    }
+  }
+
+  return operator
+}
+
+/**
+ * 
  * @param ast 抽象语法树
  * @returns ES DSL
  */
@@ -192,6 +244,20 @@ const resolveCommand: Resolver = ast => dsl => {
         }
       }))
       dsl.sort = sort
+    } else if (cmd.type === 'eval') {
+
+      const operator = cmd.value.params.n2 ? `${parseExpr(cmd.value.params.n1)}, ${parseExpr(cmd.value.params.n2)}` :
+        parseExpr(cmd.value.params.n1)
+
+      const script_fields: elasticsearch.script_fields = {
+        [cmd.value.newFieldName]: {
+          "script": {
+            "lang": "painless",
+            "source": `Math.${cmd.value.fn}(${operator})`
+          }
+        }
+      }
+      dsl.script_fields = script_fields
     } else {
       throw new CommandError(`未支持翻译的命令: ${cmd.type}`)
     }
