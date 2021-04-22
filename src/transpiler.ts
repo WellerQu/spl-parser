@@ -173,7 +173,7 @@ const resolveOperation: Resolver = ast => dsl => {
  * @returns string eval相关函数的运算式
  */
 
-const parseOperator = (ast: ast.EvalExprAstNode | ast.EvalExprAstNode[]): string => {
+const parseExpr = (ast: ast.EvalExprAstNode | ast.EvalExprAstNode[]): string => {
 
   let operator = ''
   function loop(arr: ast.EvalExprAstNode[], end = '') {
@@ -246,8 +246,8 @@ const resolveCommand: Resolver = ast => dsl => {
       dsl.sort = sort
     } else if (cmd.type === 'eval') {
 
-      const operator = cmd.value.params.n2 ? `${parseOperator(cmd.value.params.n1)}, ${parseOperator(cmd.value.params.n2)}` :
-        parseOperator(cmd.value.params.n1)
+      const operator = cmd.value.params.n2 ? `${parseExpr(cmd.value.params.n1)}, ${parseExpr(cmd.value.params.n2)}` :
+        parseExpr(cmd.value.params.n1)
 
       const script_fields: elasticsearch.script_fields = {
         [cmd.value.newFieldName]: {
