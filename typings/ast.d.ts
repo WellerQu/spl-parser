@@ -48,11 +48,45 @@ declare namespace ast {
    * 排序字段, 字段的一种
    */
   type SortField = Pick<Field, 'fieldName' | 'fieldType'> & { order?: "asc" | "desc" }
-  
+
   /**
    * 筛选字段, 字段的一种
    */
   type SourceField = Pick<Field, 'fieldName' | 'fieldType'>
+
+
+  /**
+   * 运算语法树数字和运算符节点
+   */
+  type numAndOperatorNode = {
+    type: 'number' | 'operator'
+    value: string
+  }
+
+  /**
+  * 运算语法树field节点
+  */
+  type fieldNode = {
+    type: 'field'
+    value: Field
+  }
+
+  /**
+   * eval表达式运算语法树节点
+   */
+  type ExprAstNode = numAndOperatorNode | fieldNode
+
+  /**
+   * eval表达式语法树节点
+   */
+  type EvalExpr = {
+    [fieldName: string]: string
+    fn: 'ceil' | 'floor' | 'max' | 'min' | 'abs'
+    params: {
+      n1: ExprAstNode[]
+      n2: ExprAstNode[]
+    }
+  }
 
   /**
    * 条件类型枚举
@@ -106,7 +140,8 @@ declare namespace ast {
     rare = "rare",
     fields = "fields",
     table = "table",
-    transaction = "transaction"
+    transaction = "transaction",
+    eval = "eval"
   }
 
   /**
@@ -122,6 +157,7 @@ declare namespace ast {
     [CommandType.fields]: SourceField[]
     [CommandType.table]: unknown
     [CommandType.transaction]: unknown
+    [CommandType.eval]: EvalField
   }
 
   type Operation = ({

@@ -99,7 +99,7 @@ describe("字段检索", () => {
     const dsl = transfer(`NOT type=""`)
     expect(dsl.query.query_string.query).toBe(`NOT type_string:""`)
   })
-  
+
   it("nonExists 字段不存在", () => {
     expect(() => {
       transfer(`nonExists=2`)
@@ -136,13 +136,13 @@ describe("OR, AND, NOT", () => {
   })
 
   it("子查询", () => {
-    expect(() => { 
+    expect(() => {
       transfer(`type=abc AND (search host=123)`)
     }).toThrowError('尚未支持的查询条件 SubSearch')
   })
 })
 
-describe("通配符", () => { 
+describe("通配符", () => {
   const transfer = transferFactory()
   it("通配符 * 表示0个或多个字符", () => {
     const dsl = transfer(`type=*line*`)
@@ -173,12 +173,12 @@ describe("数字字段⽀持范围查询", () => {
   })
 
   it("⽅括号，花括号组合使⽤", () => {
-    { 
+    {
       const dsl = transfer(`grade=[50 TO 80}`)
       expect(dsl.query.query_string.query).toBe(`grade_number:[50 TO 80}`)
     }
 
-    { 
+    {
       const dsl = transfer(`grade={50 TO 80]`)
       expect(dsl.query.query_string.query).toBe(`grade_number:{50 TO 80]`)
     }
@@ -438,20 +438,121 @@ describe("高级查询", () => {
   })
 
   describe("eval计算", () => {
-    it("不含字段表达式", () => {
-      parse(`* | eval newFieldName=ceil(2*(3+4))`)
-      parse(`* | eval newFieldName=floor(2*(3+4))`)
-      parse(`* | eval newFieldName=abs(2*(3+4))`)
-      parse(`* | eval newFieldName=max(2*(3+4), 2)`)
-      parse(`* | eval newFieldName=min(2*(3+4), 2)`)
+
+    it('不含字段表达式', () => {
+      const dslCeil = transfer(`* | eval newFieldName=ceil(2*(3+4))`)
+      expect(dslCeil.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.ceil(2*(3+4))"
+          }
+        }
+      })
+
+      const dslFloor = transfer(`* | eval newFieldName=floor(2*(3+4))`)
+      expect(dslFloor.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.floor(2*(3+4))"
+          }
+        }
+      })
+
+      const dslAbs = transfer(`* | eval newFieldName=abs(2*(3+4))`)
+      expect(dslAbs.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.abs(2*(3+4))"
+          }
+        }
+      })
     })
 
     it("包含字段表达式", () => {
-      parse(`* | eval newFieldName=ceil(fieldName*(3+4))`)
-      parse(`* | eval newFieldName=floor(fieldName*(3+4))`)
-      parse(`* | eval newFieldName=abs(fieldName*(3+4))`)
-      parse(`* | eval newFieldName=max(fieldName*(3+4), 2)`)
-      parse(`* | eval newFieldName=min(fieldName*(3+4), 3)`)
+
+      const dslCeil = transfer(`* | eval newFieldName=ceil(fieldName*(3+4))`)
+      expect(dslCeil.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.ceil(doc['fieldName_number'].value*(3+4))"
+          }
+        }
+      })
+
+      const dslFloor = transfer(`* | eval newFieldName=floor(fieldName*(3+4))`)
+      expect(dslFloor.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.floor(doc['fieldName_number'].value*(3+4))"
+          }
+        }
+      })
+
+      const dslAbs = transfer(`* | eval newFieldName=abs(fieldName*(3+4))`)
+      expect(dslAbs.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.abs(doc['fieldName_number'].value*(3+4))"
+          }
+        }
+      })
+
+      const dslMax = transfer(`* | eval newFieldName=max(fieldName*(3+4), 2)`)
+      expect(dslMax.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.max(doc['fieldName_number'].value*(3+4), 2)"
+          }
+        }
+      })
+
+      const dslMin = transfer(`* | eval newFieldName=min(fieldName*(3+4), 2)`)
+      expect(dslMin.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.min(doc['fieldName_number'].value*(3+4), 2)"
+          }
+        }
+      })
+
+      const dslMinusMin = transfer(`* | eval newFieldName=min(-1+2, -1)`)
+      expect(dslMinusMin.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.min(-1+2, -1)"
+          }
+        }
+      })
+
+      const dslBinaryMin = transfer(`* | eval newFieldName=min(fieldName*(3+4), fieldName)`)
+      expect(dslBinaryMin.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.min(doc['fieldName_number'].value*(3+4), doc['fieldName_number'].value)"
+          }
+        }
+      })
+
+      const dslBinaryMax = transfer(`* | eval newFieldName=max(fieldName*(3+4), fieldName*(1+2))`)
+      expect(dslBinaryMax.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            "lang": "painless",
+            "source": "Math.max(doc['fieldName_number'].value*(3+4), doc['fieldName_number'].value*(1+2))"
+          }
+        }
+      })
+
     })
   })
 })

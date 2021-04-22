@@ -238,31 +238,41 @@ Transaction =
  * 计算
  */
 Evaluation =
-  Eval Space+ newName:FieldName Space* Equal Space* base:(Unary/Binary) { return evalNode("eval", {...base}) }
+  Eval Space+ newFieldName:FieldName Space* Equal Space* base:(Unary/Binary) { return evalNode("eval", {newFieldName, ...base}) }
 
 /**
  * 一元操作
  */
 Unary =
-  fn:(Ceil/Floor/Abs) Space* L_S_Bracket param:Expr R_S_Bracket { return { fn, params: [param]} }
+  fn:(Ceil/Floor/Abs) Space* L_S_Bracket Space* n1:Expr Space* R_S_Bracket { return { fn, params: {n1}} }
 
 /**
  * 二元操作
  */
 Binary =
-  fn:(Max/Min) Space* L_S_Bracket Space* param1:$(Expr) Space* Comma Space* param2:$(Expr) Space* R_S_Bracket { return { fn, params: [param1, param2]} }
+  fn:(Max/Min) Space* L_S_Bracket Space* n1:Expr Space* Comma Space* n2:Expr Space* R_S_Bracket { return { fn, params: {n1, n2}} }
 
 /**
  * 四则运算
  */
-Expr =
-  Term (Space* (Plus/Minus) Space* Term)*
+ Expr =
+ lTerm:Term expr:(Space* operator:PlusOrMinus Space* rTerm:Term { return [operator, rTerm]})* {
+ return  expr.length ? [lTerm].concat(...expr) : lTerm
+}
+
 Term =
-  Factor (Space* (Times/Slash) Space* Factor)*
-Factor =
-  L_S_Bracket Space* Expr Space* R_S_Bracket
-  / Num
-  / FieldName
+ lFactor:Factor expr:(MultiplyOrDivide Factor)* {
+ return  expr.length ? [lFactor].concat(...expr) : lFactor
+}
+
+Factor = L_S_Bracket Space* Expr:(Expr) Space* R_S_Bracket { return Expr } 
+/ Space* num:Num Space* { return evalNode('number', num)}
+/ Space* name:FieldName Space* { return evalNode('field', fieldNode(name, 'number'))}
+
+MultiplyOrDivide = operator: (Times/Slash) { return evalNode('operator', operator)}
+
+PlusOrMinus = operator: (Plus/Minus) { return evalNode('operator', operator) }
+
 // -------------------------------------- 命令结束 --------------------------------------
 
 // -------------------------------------- 字段开始 --------------------------------------
