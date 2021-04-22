@@ -56,20 +56,23 @@ declare namespace ast {
 
 
   /**
-   * 加减乘除运算语法树
+   * 加减乘除运算语法树节点
    */
-  type OperatorAst = {
+  type OperatorAstNode = {
     type: 'fieldName' | 'number' | 'operator'
     value: string
   }
 
   /**
-   * eval字段
+   * 加减乘除运算语法树
    */
   type EvalField = {
     [propName: string]: string
     fn: 'ceil' | 'floor' | 'max' | 'min'
-    params: OperatorAst[]
+    params: {
+      n1: OperatorAstNode[]
+      n2: OperatorAstNode[]
+    }
   }
 
   /**
@@ -141,7 +144,7 @@ declare namespace ast {
     [CommandType.fields]: SourceField[]
     [CommandType.table]: unknown
     [CommandType.transaction]: unknown
-    [CommandType.eval]: evalField
+    [CommandType.eval]: EvalField
   }
 
   type Operation = ({

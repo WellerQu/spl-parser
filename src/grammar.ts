@@ -244,13 +244,13 @@ Evaluation =
  * 一元操作
  */
 Unary =
-  fn:(Ceil/Floor/Abs) Space* L_S_Bracket param:Expr R_S_Bracket { return { fn, params: [param]} }
+  fn:(Ceil/Floor/Abs) Space* L_S_Bracket n1:Expr R_S_Bracket { return { fn, params: {n1}} }
 
 /**
  * 二元操作
  */
 Binary =
-  fn:(Max/Min) Space* L_S_Bracket Space* param1:Expr Space* Comma Space* param2:Expr Space* R_S_Bracket { return { fn, params: [param1, param2]} }
+  fn:(Max/Min) Space* L_S_Bracket Space* n1:Expr Space* Comma Space* n2:Expr Space* R_S_Bracket { return { fn, params: {n1, n2}} }
 
 /**
  * 四则运算
@@ -265,38 +265,13 @@ Term =
  return  o.length ? [l].concat(...o) : l
 }
 Factor = L_S_Bracket Space* Expr:(Expr) Space* R_S_Bracket { return Expr } 
-/ num:Integer+ {
-return {
-   type: 'number',
-   value: num.join('')
- }
-}
-/ '-' num:Integer {
-  return {
-    "type": "number",
-    value : '-'+num
-  }
-}
-/ name:FieldName + {
-  return {
-   type: 'fieldName',
-   value: name.join('')
-  }
-}
+/ num:Integer+ { return evalNode('number', num.join(''))}
+/ '-' num:Integer { return evalNode('number', '-'+num)}
+/ name:FieldName + { return evalNode('fieldName', name.join(''))}
 
-MultiplyOrDivide = operator: (Times/Slash) {
-return {
-   type: 'operator',
-   value: operator
-  }
-}
+MultiplyOrDivide = operator: (Times/Slash) { return evalNode('operator', operator)}
 
-PlusOrMinus = operator: (Plus/Minus) {
-return {
-   type: 'operator',
-   value: operator
-  }
-}
+PlusOrMinus = operator: (Plus/Minus) { return evalNode('operator', operator) }
 
 // -------------------------------------- 命令结束 --------------------------------------
 

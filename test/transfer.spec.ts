@@ -200,7 +200,9 @@ describe("高级查询", () => {
       ["path", ["string"]],
       ["hostname", ["string"]],
       ["timestamp", ["string"]],
-      ["offset", ["string"]]
+      ["offset", ["string"]],
+      ["number", ["string"]],
+      ["operator", ["string"]]
     ])
   })
 

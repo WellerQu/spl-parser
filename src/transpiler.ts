@@ -173,17 +173,12 @@ const resolveOperation: Resolver = ast => dsl => {
  * @returns string eval相关函数的运算式
  */
 
-interface operatorAst {
-  type: 'fieldName' | 'number' | 'operator'
-  value: string
-}
-
-const parseOperator = (ast: operatorAst[] | operatorAst): string => {
+const parseOperator = (ast: ast.OperatorAstNode | ast.OperatorAstNode[]): string => {
 
   let operator = ''
-  function loop(arr: operatorAst[], end = '') {
+  function loop(arr: ast.OperatorAstNode[], end = '') {
 
-    arr.forEach((item: operatorAst, index: number) => {
+    arr.forEach((item: ast.OperatorAstNode, index: number) => {
 
       let cur = ''
       if (Array.isArray(item) && item.length) {
@@ -253,8 +248,8 @@ const resolveCommand: Resolver = ast => dsl => {
       dsl.sort = sort
     } else if (cmd.type === 'eval') {
 
-      const operator = cmd.value.params[1] ? `${parseOperator(cmd.value.params[0])}, ${parseOperator(cmd.value.params[1])}` :
-        parseOperator(cmd.value.params[0])
+      const operator = cmd.value.params.n2 ? `${parseOperator(cmd.value.params.n1)}, ${parseOperator(cmd.value.params.n2)}` :
+        parseOperator(cmd.value.params.n1)
       const script_fields = {
         [cmd.value?.newFieldName]: {
           "script": {

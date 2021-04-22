@@ -35,7 +35,8 @@ export const typeCheck = (mapping?: Map<string, TypeInfo[]>): (ast: Ast) => Ast 
  * @param mapping 字段类型映射关系
  */
 function checkTypeBaseOnMapping(field: ast.Field, mapping: Map<string, TypeInfo[]>): void {
-  // 字段不存在
+
+  // // 字段不存在
   if (!mapping.has(field.fieldName)) {
     throw new FieldTypeError(`字段 "${field.fieldName}" 不存在`)
   }
@@ -157,13 +158,25 @@ const checkCommands: Checker = mapping => ast => {
         checkTypeBaseOnMapping(field, mapping)
       }
     } else if (command.type === 'eval') {
-      for (const field of command.value) {
-        checkTypeBaseOnMapping(field, mapping)
-      }
+      const params = command.value.params
+      ergodic(params.n2 ? [params.n1, params.n2] : [params.n1], mapping)
     } else {
       throw new AstError(`未支持检查的命令: ${command.type}`)
     }
   }
 
   return ast
+}
+
+/**
+ * 递归检查运算公式字段
+* */
+function ergodic(arr: ast.OperatorAstNode[] | ast.OperatorAstNode[][], mapping: Map<string, TypeInfo[]>) {
+  arr.forEach((item: ast.OperatorAstNode | ast.OperatorAstNode[]) => {
+    if (Array.isArray(item)) {
+      ergodic(item, mapping)
+    } else {
+      checkTypeBaseOnMapping({ fieldName: item.type, fieldType: 'string' }, mapping)
+    }
+  })
 }
