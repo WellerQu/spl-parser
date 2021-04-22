@@ -4,7 +4,7 @@
  * @returns 字段显示名称
  */
 export function format(field: ast.Field):string {
-  if (field.fieldName.startsWith("_")) {
+  if (field.fieldName.startsWith('_')) {
     return field.fieldName
   }
 
