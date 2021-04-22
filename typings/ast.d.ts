@@ -67,7 +67,7 @@ declare namespace ast {
    * 加减乘除运算语法树
    */
   type EvalField = {
-    [propName: string]: string
+    [fieldName: string]: string
     fn: 'ceil' | 'floor' | 'max' | 'min'
     params: {
       n1: OperatorAstNode[]
