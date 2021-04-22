@@ -244,7 +244,7 @@ Evaluation =
  * 一元操作
  */
 Unary =
-  fn:(Ceil/Floor/Abs) Space* L_S_Bracket n1:Expr R_S_Bracket { return { fn, params: {n1}} }
+  fn:(Ceil/Floor/Abs) Space* L_S_Bracket Space* n1:Expr Space* R_S_Bracket { return { fn, params: {n1}} }
 
 /**
  * 二元操作
@@ -256,18 +256,18 @@ Binary =
  * 四则运算
  */
  Expr =
- l:Term o:(Space* i:PlusOrMinus Space* r:Term { return [i, r]})* {
- return  o.length ? [l].concat(...o) : l
+ lTerm:Term expr:(Space* operator:PlusOrMinus Space* rTerm:Term { return [operator, rTerm]})* {
+ return  expr.length ? [lTerm, ...expr].flat() : lTerm
 }
+
 Term =
- l:Factor o:(MultiplyOrDivide Factor)* {
- 
- return  o.length ? [l].concat(...o) : l
+ lFactor:Factor expr:(MultiplyOrDivide Factor)* {
+ return  expr.length ? [lFactor, ...expr].flat() : lFactor
 }
+
 Factor = L_S_Bracket Space* Expr:(Expr) Space* R_S_Bracket { return Expr } 
-/ num:Integer+ { return evalNode('number', num.join(''))}
-/ '-' num:Integer { return evalNode('number', '-'+num)}
-/ name:FieldName + { return evalNode('fieldName', name.join(''))}
+/ Space* num:Num Space* { return evalNode('number', num)}
+/ Space* name:FieldName Space* { return evalNode('field', fieldNode(name, 'number'))}
 
 MultiplyOrDivide = operator: (Times/Slash) { return evalNode('operator', operator)}
 

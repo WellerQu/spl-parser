@@ -200,9 +200,7 @@ describe("高级查询", () => {
       ["path", ["string"]],
       ["hostname", ["string"]],
       ["timestamp", ["string"]],
-      ["offset", ["string"]],
-      ["number", ["string"]],
-      ["operator", ["string"]]
+      ["offset", ["string"]]
     ])
   })
 
@@ -535,22 +533,22 @@ describe("高级查询", () => {
         }
       })
 
-      const dslBinaryMin = transfer(`* | eval newFieldName=min(fieldName*(3+4), fieldName2)`)
+      const dslBinaryMin = transfer(`* | eval newFieldName=min(fieldName*(3+4), fieldName)`)
       expect(dslBinaryMin.script_fields).toEqual({
         newFieldName: {
           script: {
             "lang": "painless",
-            "source": "Math.min(doc['fieldName_number'].value*(3+4), doc['fieldName2_number'].value)"
+            "source": "Math.min(doc['fieldName_number'].value*(3+4), doc['fieldName_number'].value)"
           }
         }
       })
 
-      const dslBinaryMax = transfer(`* | eval newFieldName=max(fieldName*(3+4), fieldName2*(1+2))`)
+      const dslBinaryMax = transfer(`* | eval newFieldName=max(fieldName*(3+4), fieldName*(1+2))`)
       expect(dslBinaryMax.script_fields).toEqual({
         newFieldName: {
           script: {
             "lang": "painless",
-            "source": "Math.max(doc['fieldName_number'].value*(3+4), doc['fieldName2_number'].value*(1+2))"
+            "source": "Math.max(doc['fieldName_number'].value*(3+4), doc['fieldName_number'].value*(1+2))"
           }
         }
       })

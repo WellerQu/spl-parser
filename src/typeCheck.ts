@@ -169,14 +169,14 @@ const checkCommands: Checker = mapping => ast => {
 }
 
 /**
- * 递归检查运算公式字段
+ * 递归检查运算表达式字段
 * */
-function ergodic(arr: ast.OperatorAstNode[] | ast.OperatorAstNode[][], mapping: Map<string, TypeInfo[]>) {
-  arr.forEach((item: ast.OperatorAstNode | ast.OperatorAstNode[]) => {
+function ergodic(arr: ast.EvalExprAstNode[] | ast.EvalExprAstNode[][], mapping: Map<string, TypeInfo[]>) {
+  arr.forEach((item: ast.EvalExprAstNode | ast.EvalExprAstNode[]) => {
     if (Array.isArray(item)) {
       ergodic(item, mapping)
-    } else {
-      checkTypeBaseOnMapping({ fieldName: item.type, fieldType: 'string' }, mapping)
+    } else if (!Array.isArray(item) && item.type === 'field') {
+      checkTypeBaseOnMapping(item.value, mapping)
     }
   })
 }

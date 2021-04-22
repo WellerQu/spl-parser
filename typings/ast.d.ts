@@ -56,22 +56,35 @@ declare namespace ast {
 
 
   /**
-   * 加减乘除运算语法树节点
+   * 运算语法树数字和运算符节点
    */
-  type OperatorAstNode = {
-    type: 'fieldName' | 'number' | 'operator'
+  type exprNode = {
+    type: 'number' | 'operator'
     value: string
   }
 
   /**
+  * 运算语法树节点
+  */
+  type fieldNode = {
+    type: 'field'
+    value: Field
+  }
+
+  /**
+   * eval表达式相关函数参数
+   */
+  type EvalExprAstNode = exprNode | fieldNode
+
+  /**
    * 加减乘除运算语法树
    */
-  type EvalField = {
+  type EvalExpr = {
     [fieldName: string]: string
-    fn: 'ceil' | 'floor' | 'max' | 'min'
+    fn: 'ceil' | 'floor' | 'max' | 'min' | 'abs'
     params: {
-      n1: OperatorAstNode[]
-      n2: OperatorAstNode[]
+      n1: EvalExprAstNode[]
+      n2: EvalExprAstNode[]
     }
   }
 

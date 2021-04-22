@@ -24,6 +24,15 @@ declare namespace elasticsearch {
     }
   }
 
+  interface script_fields {
+    [newFieldName: string]: {
+      script: {
+        lang: 'painless',
+        source: string
+      }
+    }
+  }
+
   interface ESQuery {
     // NOTE: ES DSL 要求的命名风格
     query: {
@@ -37,6 +46,6 @@ declare namespace elasticsearch {
     _source?: string[]
     aggs?: ESQueryStatisticAggr,
     sort?: ESQuerySort[] | undefined
-    'script_fields'?: unknown
+    'script_fields'?: script_fields
   }
 }

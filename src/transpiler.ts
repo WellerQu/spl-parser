@@ -173,20 +173,19 @@ const resolveOperation: Resolver = ast => dsl => {
  * @returns string eval相关函数的运算式
  */
 
-const parseOperator = (ast: ast.OperatorAstNode | ast.OperatorAstNode[]): string => {
+const parseOperator = (ast: ast.EvalExprAstNode | ast.EvalExprAstNode[]): string => {
 
   let operator = ''
-  function loop(arr: ast.OperatorAstNode[], end = '') {
+  function loop(arr: ast.EvalExprAstNode[], end = '') {
 
-    arr.forEach((item: ast.OperatorAstNode, index: number) => {
+    arr.forEach((item: ast.EvalExprAstNode) => {
 
       let cur = ''
       if (Array.isArray(item) && item.length) {
 
         const firstItem = item[0].type
         const secItem = item[1]
-
-        if (firstItem === 'number' && ['+', '-'].includes(secItem.value)) {
+        if (firstItem === 'number' && ['+', '-'].includes(secItem?.value)) {
           operator += '('
           loop(item, ')')
         } else {
@@ -194,8 +193,10 @@ const parseOperator = (ast: ast.OperatorAstNode | ast.OperatorAstNode[]): string
         }
       }
 
-      if (item.type === 'fieldName') {
-        cur = `doc['${item.value}_number'].value`
+
+
+      if (item.type === 'field') {
+        cur = `doc['${item.value.fieldName}_${item.value.fieldType}'].value`
         operator += cur
 
       } else if (['operator', 'number'].includes(item.type)) {
@@ -210,9 +211,8 @@ const parseOperator = (ast: ast.OperatorAstNode | ast.OperatorAstNode[]): string
   if (Array.isArray(ast)) {
     loop(ast)
   } else {
-    if (ast.type === 'fieldName') {
-      operator += `doc['${ast.value}_number'].value`
-
+    if (ast.type === 'field') {
+      operator += `doc['${ast.value.fieldName}_${ast.value.fieldType}'].value`
     } else if (['operator', 'number'].includes(ast.type)) {
       operator += ast.value
     }
@@ -250,11 +250,12 @@ const resolveCommand: Resolver = ast => dsl => {
 
       const operator = cmd.value.params.n2 ? `${parseOperator(cmd.value.params.n1)}, ${parseOperator(cmd.value.params.n2)}` :
         parseOperator(cmd.value.params.n1)
-      const script_fields = {
-        [cmd.value?.newFieldName]: {
+
+      const script_fields: elasticsearch.script_fields = {
+        [cmd.value.newFieldName]: {
           "script": {
             "lang": "painless",
-            "source": `Math.${cmd.value?.fn}(${operator})`
+            "source": `Math.${cmd.value.fn}(${operator})`
           }
         }
       }
