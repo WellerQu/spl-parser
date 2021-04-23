@@ -1,4 +1,6 @@
 /// <reference types="../typings/elasticsearch" />
+/// <reference types="../typings/index" />
+
 
 import { pipe } from './utils/pipe'
 
