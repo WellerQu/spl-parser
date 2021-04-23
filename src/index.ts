@@ -1,4 +1,4 @@
-/// <reference types="../typings" />
+/// <reference types="../typings/elasticsearch" />
 
 import { pipe } from './utils/pipe'
 
