@@ -18,7 +18,7 @@ function getFieldsFromQuery(query: ast.Query): Field[] {
       if (condition.type === 'KeyValue') {
         fields.push({
           ...condition.value,
-          location: 'query',
+          location: 'condition',
           formatName: format(condition.value)
         })
       }
@@ -54,7 +54,7 @@ function getFieldsFromOperation(operations: ast.Operation[]): Field[] {
       fieldName: item.fieldName,
       fieldType: item.fieldType,
       formatName: format(item),
-      location: 'statistic' 
+      location: 'statistic aggr' 
     })
   }
 

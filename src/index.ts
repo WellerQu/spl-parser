@@ -8,6 +8,7 @@ import { parse } from './parser'
 import { typeCheck } from './typeCheck'
 import { transpiler, DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource, DSLTimeRange, DSLTimeRangePlaceholder } from './transpiler'
 import { getFields } from './fields'
+import { getKeywords } from './keywords'
 
 export { getSuggestions, SUGGESTIONS } from './suggestions'
 
@@ -27,5 +28,10 @@ export const transferFactory = (options: Partial<TransferOptions> = {}): (SPL: s
  * 从用户输入的 SPL 中取得字段信息
  */
 export const recognizeFields = pipe(parse, getFields)
+
+/**
+ * 从用户输入的 SPL 中取得关键词信息
+ */
+export const recognizeKeywords = pipe(parse, getKeywords)
 
 export { DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource, DSLTimeRange, DSLTimeRangePlaceholder }

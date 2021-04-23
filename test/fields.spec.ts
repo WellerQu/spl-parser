@@ -1,8 +1,26 @@
 /// <reference types="../typings" />
 
-import { recognizeFields } from '../src'
+import { recognizeFields, recognizeKeywords } from '../src'
 
 describe('识别字段', () => {
+  it('识别条件中的关键词', () => {
+    const keywords = recognizeKeywords('a=b AND c OR (d=e OR h OR "hello world") AND f=[2 TO 10] OR g=/abc/')
+    expect(keywords).toEqual<Keyword[]>([
+      {
+        location: 'condition',
+        content: 'c'
+      },
+      {
+        location: 'condition',
+        content: 'h'
+      },
+      {
+        location: 'condition',
+        content: 'hello world'
+      }
+    ])
+  })
+
   it('识别条件中的字段', () => {
     const fields = recognizeFields('a=b AND c OR (d=e) AND f=[2 TO 10] OR g=/abc/')
     expect(fields).toEqual<Field[]>([
@@ -11,28 +29,28 @@ describe('识别字段', () => {
         fieldType: 'string',
         formatName: 'a_string',
         fieldValue: 'b',
-        location: 'query'
+        location: 'condition'
       },
       {
         fieldName: 'd',
         fieldType: 'string',
         formatName: 'd_string',
         fieldValue: 'e',
-        location: 'query'
+        location: 'condition'
       },
       {
         fieldName: 'f',
         fieldType: 'range',
         formatName: 'f_number',
         fieldValue: '[2 TO 10]',
-        location: 'query'
+        location: 'condition'
       },
       {
         fieldName: 'g',
         fieldType: 'regexp',
         formatName: 'g_string',
         fieldValue: 'abc',
-        location: 'query'
+        location: 'condition'
       }
     ])
   })
@@ -45,7 +63,7 @@ describe('识别字段', () => {
           fieldName: 'a',
           fieldType: 'string',
           formatName: 'a_string',
-          location: 'statistic',
+          location: 'statistic aggr',
         },
         {
           fieldName: 'c',
@@ -69,7 +87,7 @@ describe('识别字段', () => {
           fieldName: 'a',
           fieldType: 'number',
           formatName: 'a_number',
-          location: 'statistic',
+          location: 'statistic aggr',
         },
         {
           fieldName: 'c',
