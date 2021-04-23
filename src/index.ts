@@ -6,7 +6,7 @@ import { pipe } from './utils/pipe'
 
 import { parse } from './parser'
 import { typeCheck } from './typeCheck'
-import { transpiler, DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource } from './transpiler'
+import { transpiler, DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource, DSLTimeRange, DSLTimeRangePlaceholder } from './transpiler'
 import { getFields } from './fields'
 
 export { getSuggestions, SUGGESTIONS } from './suggestions'
@@ -28,4 +28,4 @@ export const transferFactory = (options: Partial<TransferOptions> = {}): (SPL: s
  */
 export const recognizeFields = pipe(parse, getFields)
 
-export { DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource }
+export { DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource, DSLTimeRange, DSLTimeRangePlaceholder }

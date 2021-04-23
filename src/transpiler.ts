@@ -154,9 +154,9 @@ const resolveOperation: Resolver = ast => dsl => {
 }
 
 /**
- * 
- * @param eval相关函数的运算式抽象语法树
- * @returns string eval相关函数的运算式
+ * 解析出 eval 命令中的表达式
+ * @param ast eval相关函数的运算式抽象语法树
+ * @returns eval相关函数的运算式
  */
 
 const parseExpr = (ast: ast.ExprAstNode | ast.ExprAstNode[]): string => {
@@ -310,4 +310,32 @@ export const DSLRemoveScriptField = (dsl: elasticsearch.ESQuery): elasticsearch.
   dsl['script_fields'] = undefined
 
   return dsl
+}
+
+/**
+ * 在 DSL 语句的查询段中追加时间范围
+ * @param placeholders 时间范围占位符
+ * @returns 
+ */
+export const DSLTimeRangePlaceholder = (placeholders: [string, string]) => (dsl: elasticsearch.ESQuery): elasticsearch.ESQuery => {
+  const origin = dsl.query['query_string'].query
+  dsl.query['query_string'].query = `(${origin}) AND (${EVENT_TIME}:[${placeholders[0]} TO ${placeholders[1]}})`
+
+  return dsl
+}
+
+/**
+ * 在 DSL 语句的查询段中追加时间范围
+ * @param range 时间范围
+ */
+export const DSLTimeRange = (range: [number, number]) => (dsl: elasticsearch.ESQuery): elasticsearch.ESQuery => {
+  const hasRange = range[0] !== 0 && range[1] !== 0
+  const start = hasRange ? (range[0] / 1000 / 60 >> 0) * 1000 * 60 : 0
+  const end = hasRange ? (range[1] / 1000 / 60 >> 0) * 1000 * 60 : 0
+
+  if (!hasRange) {
+    return dsl
+  }
+
+  return DSLTimeRangePlaceholder([start.toString(), end.toString()])(dsl)
 }
