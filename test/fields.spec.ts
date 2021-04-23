@@ -81,25 +81,20 @@ describe('识别字段', () => {
     }
 
     {
-      const fields = recognizeFields('* | stats max(a) as b by c,d')
+      const fields = recognizeFields('* AND Level=* | stats max(Level)')
       expect(fields).toEqual<Field[]>([
         {
-          fieldName: 'a',
+          fieldName: 'Level',
+          fieldType: 'string',
+          fieldValue: '*',
+          formatName: 'Level_string',
+          location: 'condition'
+        },
+        {
+          fieldName: 'Level',
           fieldType: 'number',
-          formatName: 'a_number',
+          formatName: 'Level_number',
           location: 'statistic aggr',
-        },
-        {
-          fieldName: 'c',
-          fieldType: 'string',
-          formatName: 'c_string',
-          location: 'statistic group',
-        },
-        {
-          fieldName: 'd',
-          fieldType: 'string',
-          formatName: 'd_string',
-          location: 'statistic group' 
         }
       ])
     }
