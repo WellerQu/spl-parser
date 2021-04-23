@@ -1,3 +1,6 @@
+/// <reference types="./ast" />
+/// <reference types="./elasticsearch" />
+
 /**
  * 建议项
  */

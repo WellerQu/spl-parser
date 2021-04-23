@@ -1,3 +1,5 @@
+/// <reference types="../typings" />
+
 import { pipe } from './utils/pipe'
 
 import { parse } from './parser'
