@@ -42,7 +42,7 @@ function checkTypeBaseOnMapping(field: ast.Field, mapping: Map<string, TypeInfo[
   }
 
   // 系统字段不检查
-  if (field.fieldName.startsWith("_")) {
+  if (field.fieldName.startsWith('_')) {
     return
   }
 
@@ -74,7 +74,7 @@ type Checker = (mapping: Map<string, TypeInfo[]>) => (ast: Ast) => Ast
 const checkQuery: Checker = mapping => ast => {
   const [query] = ast
   if (!query) {
-    throw new AstError("抽象语法树缺少查询语句")
+    throw new AstError('抽象语法树缺少查询语句')
   }
 
   // 递归检查, 不用担心递归调用栈爆栈的问题, 这个世界上不存在写十几层括号还没把自己绕进去的人

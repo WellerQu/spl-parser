@@ -4,11 +4,11 @@ declare namespace ast {
    * 字段值类型枚举
    */
   enum FieldValueType {
-    number = "number",
-    string = "string",
-    time = "time",
-    regexp = "regexp",
-    range = "range"
+    number = 'number',
+    string = 'string',
+    time = 'time',
+    regexp = 'regexp',
+    range = 'range'
   }
 
   /**
@@ -47,7 +47,7 @@ declare namespace ast {
   /**
    * 排序字段, 字段的一种
    */
-  type SortField = Pick<Field, 'fieldName' | 'fieldType'> & { order?: "asc" | "desc" }
+  type SortField = Pick<Field, 'fieldName' | 'fieldType'> & { order?: 'asc' | 'desc' }
 
   /**
    * 筛选字段, 字段的一种
@@ -80,23 +80,23 @@ declare namespace ast {
    * eval表达式语法树节点
    */
   type EvalExpr = {
-    [fieldName: string]: string
     fn: 'ceil' | 'floor' | 'max' | 'min' | 'abs'
     params: {
       n1: ExprAstNode[]
       n2: ExprAstNode[]
     }
+    [fieldName: string]: string
   }
 
   /**
    * 条件类型枚举
    */
   enum ConditionType {
-    SingleKeyword = "SingleKeyword",
-    UnionKeywords = "UnionKeywords",
-    KeyValue = "KeyValue",
-    SubQuery = "SubQuery",
-    SubSearch = "SubSearch"
+    SingleKeyword = 'SingleKeyword',
+    UnionKeywords = 'UnionKeywords',
+    KeyValue = 'KeyValue',
+    SubQuery = 'SubQuery',
+    SubSearch = 'SubSearch'
   }
 
   /**
@@ -114,7 +114,7 @@ declare namespace ast {
    * 操作类型枚举
    */
   enum OperationType {
-    Statistic = "Statistic",
+    Statistic = 'Statistic',
   }
 
   /**
@@ -132,16 +132,16 @@ declare namespace ast {
    * 命令类型映射
    */
   enum CommandType {
-    sort = "sort",
-    limit = "limit",
-    head = "head",
-    tail = "tail",
-    top = "top",
-    rare = "rare",
-    fields = "fields",
-    table = "table",
-    transaction = "transaction",
-    eval = "eval"
+    sort = 'sort',
+    limit = 'limit',
+    head = 'head',
+    tail = 'tail',
+    top = 'top',
+    rare = 'rare',
+    fields = 'fields',
+    table = 'table',
+    transaction = 'transaction',
+    eval = 'eval'
   }
 
   /**
@@ -157,7 +157,7 @@ declare namespace ast {
     [CommandType.fields]: SourceField[]
     [CommandType.table]: unknown
     [CommandType.transaction]: unknown
-    [CommandType.eval]: EvalField
+    [CommandType.eval]: EvalExpr
   }
 
   type Operation = ({
@@ -198,6 +198,6 @@ declare namespace ast {
    * 抽象语法树条件节点, 抽象语法树节点的一种
    */
   interface ConditionNode<T> extends Node<T, ConditionNodeType> {
-    decorator: ("NOT")[]
+    decorator: ('NOT')[]
   }
 }
