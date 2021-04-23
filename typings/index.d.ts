@@ -40,6 +40,14 @@ interface SuggestionItem {
 }
 
 /**
+ * 抽象语法树中出现的字段
+ */
+interface Field extends ast.Field {
+  location: 'query' | 'statistic' | 'statistic group' | 'command'
+  formatName: string
+}
+
+/**
  * 抽象语法树
  */
 type Ast = [
