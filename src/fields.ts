@@ -48,7 +48,9 @@ function getFieldsFromOperation(operations: ast.Operation[]): Field[] {
     throw new OperationError('暂时不支持非统计操作')
   }
 
-  const { fields: aggrFields, groupBy = [], } = operation.value
+  const aggrFields = operation.value.fields
+  const groupBy = operation.value.groupBy ??[]
+
   for (const item of aggrFields) {
     fields.push({
       fieldName: item.fieldName,
