@@ -1,5 +1,6 @@
 import { pipe } from './utils/pipe'
 import { format } from './utils/format'
+import { ConditionError, OperationError, CommandError } from './errors'
 
 type Resolver = (ast: Ast) => (dsl: elasticsearch.ESQuery) => elasticsearch.ESQuery
 
@@ -17,21 +18,6 @@ const RECORD_SIZE = 10000
  * log事件时间字段名
  */
 const EVENT_TIME = '_event_time'
-
-/**
- * 查询语句条件错误
- */
-export class ConditionError extends Error { }
-
-/**
- * 操作错误
- */
-export class OperationError extends Error { }
-
-/**
- * 命令错误
- */
-export class CommandError extends Error { }
 
 /**
  * 转译函数
@@ -73,7 +59,7 @@ const groups2string = (query: Ast[0]): string =>
         result.push(condition.value)
       } else if (condition.type === 'UnionKeywords') {
         result.push(`"${condition.value ?? ''}"`)
-      } else if (condition.type === "KeyValue") {
+      } else if (condition.type === 'KeyValue') {
         const { fieldType, fieldValue } = condition.value
         const fieldName = format(condition.value)
 
@@ -87,8 +73,8 @@ const groups2string = (query: Ast[0]): string =>
           result.push(`${fieldName}:${fieldValue}`)
         else if (fieldType === 'time')
           throw new ConditionError('Not Implemented: field type is time')
-      } else if (condition.type === "SubQuery") {
-        result.push("(" + groups2string(condition.value) + ")")
+      } else if (condition.type === 'SubQuery') {
+        result.push('(' + groups2string(condition.value) + ')')
       } else {
         throw new ConditionError(`尚未支持的查询条件 ${condition.type}`)
       }
@@ -233,13 +219,13 @@ const resolveCommand: Resolver = ast => dsl => {
   // 解析命令
   for (const cmd of commands) {
     if (cmd.type === 'fields') {
-      dsl._source = ["_message", "_event_time"].concat(cmd.value.map(item => item.fieldName))
+      dsl._source = ['_message', '_event_time'].concat(cmd.value.map(item => item.fieldName))
     } else if (cmd.type === 'limit') {
       dsl.size = +cmd.value
     } else if (cmd.type === 'sort') {
       const sort: elasticsearch.ESQuerySort[] = cmd.value.map<elasticsearch.ESQuerySort>(item => ({
         [item.fieldName]: {
-          order: item.order ?? "desc",
+          order: item.order ?? 'desc',
           'unmapped_type': 'string'
         }
       }))
@@ -251,9 +237,9 @@ const resolveCommand: Resolver = ast => dsl => {
 
       const scriptFields: elasticsearch.ScriptFields = {
         [cmd.value.newFieldName]: {
-          "script": {
-            "lang": "painless",
-            "source": `Math.${cmd.value.fn}(${operator})`
+          'script': {
+            'lang': 'painless',
+            'source': `Math.${cmd.value.fn}(${operator})`
           }
         }
       }

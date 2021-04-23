@@ -1,6 +1,6 @@
 /// <reference types="../typings" />
 
-import { getSuggestions, SUGGESTIONS } from '../src/suggestions'
+import { getSuggestions, SUGGESTIONS } from '../src'
 
 describe('符号提示', () => {
   it('预期一个Space', () => {

@@ -1,15 +1,6 @@
+import { FieldTypeError, AstError } from './errors'
 import { identity } from './utils/identity'
 import { pipe } from './utils/pipe'
-
-/**
- * 字段类型错误
- */
-export class FieldTypeError extends Error { }
-
-/**
- * 抽象语法树错误
- */
-export class AstError extends Error { }
 
 /**
  * 为抽象语法树中的字段进行类型检查, 若出现不符合预期的类型, 则类型错误
