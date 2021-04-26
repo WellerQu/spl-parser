@@ -9,6 +9,11 @@ describe('符号提示', () => {
       SUGGESTIONS['space']
     ])
   })
+
+  it('多个条件', () => {
+    const suggestions = getSuggestions('a ')
+    expect(suggestions).toHaveLength(5)
+  })
 })
 
 describe('字段名提示', () => {

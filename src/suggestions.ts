@@ -448,7 +448,7 @@ export function getSuggestions(input: string): SuggestionItem[] {
 
   const [, suggestionMetadata] = tryParse(input)
   for (const meta of suggestionMetadata) {
-    const suggestion = SUGGESTIONS[meta.description as SuggestionMapping]
+    const suggestion = SUGGESTIONS[meta as SuggestionMapping]
     if (!suggestion) {
       continue
     }
