@@ -443,10 +443,10 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
  * @param input 用户输入 SPL
  * @returns 建议列表
  */
-export function getSuggestions(input: string): SuggestionItem[] {
+export function getSuggestions(input: string): [SuggestionItem[], string | undefined] {
   const items: SuggestionItem[] = []
 
-  const [, suggestionMetadata] = tryParse(input)
+  const [, suggestionMetadata, found] = tryParse(input)
   for (const meta of suggestionMetadata) {
     const suggestion = SUGGESTIONS[meta as SuggestionMapping]
     if (!suggestion) {
@@ -456,5 +456,5 @@ export function getSuggestions(input: string): SuggestionItem[] {
     items.push(suggestion)
   }
 
-  return items
+  return [items, found]
 }

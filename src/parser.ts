@@ -21,9 +21,9 @@ const parser = peg.generate(grammar.replace('[ \r\n\t]',  '[ \\r\\n\\t]'))
  * @param input 用户输入的SPL
  * @returns 抽象语法树, 建议
  */
-export function tryParse(input: string): [Ast | undefined, string[]] | never {
+export function tryParse(input: string): [Ast | undefined, string[], string | undefined] | never {
   try {
-    return [parse(input), []]
+    return [parse(input), [], undefined]
   } catch (error) {
     // 仅处理语法错误, 返回建议
     if (isPEGSyntaxError(error)) {
@@ -38,7 +38,7 @@ export function tryParse(input: string): [Ast | undefined, string[]] | never {
         keys.add(item.description)
       }
 
-      return [undefined, Array.from(keys.values())]
+      return [undefined, Array.from(keys.values()), error.found]
     }
 
     throw error

@@ -334,7 +334,7 @@ Times "times" = "*"
 Num "number" = $(minus:Minus? Space* n:$(Integer ("." Integer)?) { return minus? -n : n})
 Integer "integer" = $([0-9]+)
 FieldName "fieldName" = $([a-zA-Z@_]+[a-zA-Z0-9]*)
-FieldValue "fieldValue" = $([^ )]+)
+FieldValue "fieldValue" = $([^ ()\\[\\]\\{\\}]+)
 Identifier "identifier" = $([.0-9a-zA-Z\u4e00-\uffff_@?*]+)
 
 `
