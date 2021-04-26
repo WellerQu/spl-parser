@@ -1,6 +1,64 @@
 /// <reference types="./ast" />
 /// <reference types="./elasticsearch" />
 
+type SuggestionMappings = {
+  _exists_: '_exists_',
+  Space: 'space',
+  AND: 'and',
+  OR: 'or',
+  NOT: 'not',
+  TO: 'to',
+  Search: 'search',
+  Count: 'count',
+  Min: 'min',
+  Max: 'max',
+  Avg: 'avg',
+  Sum: 'sum',
+  DC: 'distinct_count',
+  Ceil: 'ceil',
+  Floor: 'floor',
+  Abs: 'abs',
+  Eval: 'evaluation',
+  LimitN: 'limit',
+  HeadN: 'head',
+  TailN: 'tail',
+  TopNF: 'top',
+  RareNF: 'rare',
+  FilterF: 'filter',
+  FieldsF: 'fields',
+  TableF: 'table',
+  TransactionF: 'transaction',
+  SortBy: 'sort_by',
+  By: 'group_by',
+  As: 'alias',
+  Stats: 'stats',
+  Pipe: 'pipe',
+  Quote: 'quote',
+  QuoteStr: 'quote_string',
+  Slash: 'slash',
+  Comma: 'comma',
+  RegExpStr: 'regexp',
+  'L_L_Bracket': 'L_L_Bracket',
+  'R_L_Bracket': 'R_L_Bracket',
+  'L_M_Bracket': 'L_M_Bracket',
+  'R_M_Bracket': 'R_M_Bracket',
+  'L_S_Bracket': 'L_S_Bracket',
+  'R_S_Bracket': 'R_S_Bracket',
+  Equal: 'equal',
+  Gt: 'greater_than',
+  Lt: 'less_than',
+  Plus: 'plus',
+  Minus: 'minus',
+  Times: 'times',
+  Num: 'number',
+  Integer: 'integer',
+  FieldName: 'fieldName',
+  FieldValue: 'fieldValue',
+  Identifier: 'identifier',
+}
+
+type SuggestionMapping = SuggestionMappings[keyof SuggestionMappings]
+
 /**
  * 建议项
  */
@@ -16,7 +74,7 @@ interface SuggestionItem {
   /**
    * 与 PEGJS 中的词法映射
    */
-  mapping: string,
+  mapping: SuggestionMapping
   /**
    * 识别码
    */
