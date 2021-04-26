@@ -325,7 +325,7 @@ L_M_Bracket "L_M_Bracket" = "["
 R_M_Bracket "R_M_Bracket" = "]"
 L_S_Bracket "L_S_Bracket" = "("
 R_S_Bracket "R_S_Bracket" = ")"
-Equal "Equal" = "="
+Equal "equal" = "="
 Gt "greater_than" = ">"
 Lt "less_than" = "<"
 Plus "plus" = "+"
@@ -333,7 +333,7 @@ Minus "minus" = "-"
 Times "times" = "*"
 Num "number" = $(minus:Minus? Space* n:$(Integer ("." Integer)?) { return minus? -n : n})
 Integer "integer" = $([0-9]+)
-FieldName "fieldName" = $([a-zA-Z@]+[a-zA-Z0-9]*)
+FieldName "fieldName" = $([a-zA-Z@_]+[a-zA-Z0-9]*)
 FieldValue "fieldValue" = $([^ )]+)
 Identifier "identifier" = $([.0-9a-zA-Z\u4e00-\uffff_@?*]+)
 
