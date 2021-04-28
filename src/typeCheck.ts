@@ -32,10 +32,10 @@ function checkTypeBaseOnMapping(field: ast.Field, mapping: Map<string, TypeInfo[
     throw new FieldTypeError(`字段 "${field.fieldName}" 不存在`)
   }
 
-  // 系统字段不检查
-  if (field.fieldName.startsWith('_')) {
-    return
-  }
+  // // 系统字段不检查
+  // if (field.fieldName.startsWith('_')) {
+  //   return
+  // }
 
   // 字段不支持任何类型, 一般不太可能出现, 触发开发者写错了.
   const types = mapping.get(field.fieldName)

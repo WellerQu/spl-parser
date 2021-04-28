@@ -44,7 +44,7 @@ describe('字段检索', () => {
     typeMapping: new Map<string, TypeInfo[]>([
       ['host', ['string', 'regexp']],
       ['type', ['string']],
-      ['_exists_', []]
+      ['_exists_', ['string']],
     ])
   })
 
@@ -199,7 +199,8 @@ describe('高级查询', () => {
       ['path', ['string']],
       ['hostname', ['string']],
       ['timestamp', ['string']],
-      ['offset', ['string']]
+      ['offset', ['string']],
+      ['_data_source', ['string']]
     ])
   })
 
@@ -348,6 +349,13 @@ describe('高级查询', () => {
           }
         }
       })
+    })
+
+    it('非数字字段进行聚合, 预期报错', () => {
+      expect(() => {
+        transfer('* | stats min(_data_source)')
+      })
+      .toThrowError('字段 "_data_source" 的类型 "[string]" 不支持此操作')
     })
   })
 
