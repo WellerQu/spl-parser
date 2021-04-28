@@ -74,7 +74,7 @@ declare namespace ast {
   /**
    * eval表达式运算语法树节点
    */
-  type ExprAstNode = NumAndOperatorNode | FieldNode
+  type EvaluationExprNode = NumAndOperatorNode | FieldNode
 
   /**
    * eval表达式语法树节点
@@ -82,9 +82,10 @@ declare namespace ast {
   type EvalExpr = {
     fn: 'ceil' | 'floor' | 'max' | 'min' | 'abs'
     params: {
-      n1: ExprAstNode[]
-      n2: ExprAstNode[]
+      n1: EvaluationExprNode[]
+      n2: EvaluationExprNode[]
     }
+    newFieldName: string
     [fieldName: string]: string
   }
 

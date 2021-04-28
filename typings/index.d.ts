@@ -132,6 +132,15 @@ type Ast = [
 ]
 
 /**
+ * 解析器
+ */
+type Resolver = (ast: Ast) => (dsl: elasticsearch.ESQuery) => elasticsearch.ESQuery
+/**
+ * 逆向解析器
+ */
+type Reverser = (ast: Ast) => (SPL: string) => string
+
+/**
  * 字段类型信息
  */
 type TypeInfo = keyof typeof ast.FieldValueType

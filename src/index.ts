@@ -6,11 +6,13 @@ import { pipe } from './utils/pipe'
 
 import { parse } from './parser'
 import { typeCheck } from './typeCheck'
-import { transpiler, DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource, DSLTimeRange, DSLTimeRangePlaceholder } from './transpiler'
+import { resolve, DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLRemoveSort, DSLRemoveSource, DSLTimeRange, DSLTimeRangePlaceholder } from './transpiler'
 import { getFields } from './fields'
 import { getKeywords } from './keywords'
 
 export { getSuggestions, SUGGESTIONS } from './suggestions'
+
+export { append } from './SPLBuilder'
 
 export interface TransferOptions {
   /**
@@ -22,7 +24,7 @@ export interface TransferOptions {
 /**
  * 将用户输入的 SPL 翻译为 ElasticSearch 的 DSL
  */
-export const transferFactory = (options: Partial<TransferOptions> = {}): (SPL: string) => elasticsearch.ESQuery => pipe(parse, typeCheck(options.typeMapping), transpiler)
+export const transferFactory = (options: Partial<TransferOptions> = {}): (SPL: string) => elasticsearch.ESQuery => pipe(parse, typeCheck(options.typeMapping), resolve)
 
 /**
  * 从用户输入的 SPL 中取得字段信息
