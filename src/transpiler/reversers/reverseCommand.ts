@@ -1,25 +1,6 @@
 import { CommandError } from '../../errors'
 import { evaluationExpr } from '../evaluationExpr'
-
-/**
- * 取出字段的原名称
- * @param field 抽象语法树的字段节点
- * @returns 字段的名称
- */
-const raw = (field: ast.Field) => field.fieldName
-
-/**
- * 取出字段名
- * @param field 抽象语法树中的排序字段
- * @returns 带有排序规则标识的字段名
- */
-const order = (field: ast.SortField) => field.fieldName + (
-  field.order === 'asc'
-    ? '+'
-    : field.order === 'desc'
-      ? '-'
-      : ''
-)
+import { order, raw } from '../formatters'
 
 /**
  * 将抽象语法树反向解析为 SPL 字符串

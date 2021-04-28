@@ -1,5 +1,5 @@
 import { OperationError } from '../../errors'
-import { format } from '../../utils/format'
+import { typing } from '../formatters'
 
 /**
  * 最大聚合范围
@@ -29,7 +29,7 @@ export const resolveOperation: Resolver = ast => dsl => {
   const { fields, groupBy, } = operation.value
   const [first] = fields
   const initialTerm: elasticsearch.ESQueryStatisticTerm = {
-    field: format(first)
+    field: typing(first)
   }
 
   if (first.aggr === 'count') {
@@ -42,7 +42,7 @@ export const resolveOperation: Resolver = ast => dsl => {
     }
   }
   const aggs: elasticsearch.ESQuery['aggs'] = (groupBy ?? []).reduceRight<elasticsearch.ESQueryStatisticAggr>((aggs, item) => {
-    const fieldName = format(item)
+    const fieldName = typing(item)
 
     return {
       [item.fieldName]: {

@@ -1,18 +1,12 @@
 import { ConditionError } from '../errors'
-import { format } from '../utils/format'
-
-/**
- * 格式化查询条件中的字段名.
- * 将 aaa 输出为 aaa_string 形式
- */
-const formatFieldName = format
+import { typing } from './formatters'
 
 /**
  * 条件组转字符串
  * @param query 抽象语法树的查询段
  * @returns 查询语句
  */
-export const conditionExpr = (query: Ast[0], separator: string, format = formatFieldName): string =>
+export const conditionExpr = (query: Ast[0], separator: string, format = typing): string =>
   query.groups.map(group => {
     return group.conditions.map(condition => {
       const result = condition.decorator.includes('NOT') ? ['NOT'] : []
