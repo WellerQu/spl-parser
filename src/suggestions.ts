@@ -25,34 +25,34 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     description: '一个空格字符',
   },
   'and': {
-    label: '并且',
+    label: 'AND',
     tag: '逻辑',
     mapping: 'and',
     code: 'AND',
-    description: '查询条件的逻辑连接符, 左右的条件须同时成立, 优先级比 OR 高',
+    description: '并且, 查询条件的逻辑连接符, 左右的条件须同时成立, 优先级比 OR 高',
     syntax: '<条件1> AND <条件2>',
     example: 'localhost=10.16.12.44 AND domain=*.bizseer.com'
   },
   'or': {
-    label: '或者',
+    label: 'OR',
     tag: '逻辑',
     mapping: 'or',
     code: 'OR',
-    description: '查询条件的逻辑连接符, 左右的条件至少须一个成立, 优先级比 AND 低',
+    description: '或者, 查询条件的逻辑连接符, 左右的条件至少须一个成立, 优先级比 AND 低',
     syntax: '<条件1> OR <条件2>',
     example: 'localhost=10.16.12.44 OR domain=*.bizseer.com'
   },
   'not': {
-    label: '否定',
+    label: 'NOT',
     tag: '逻辑',
     mapping: 'not',
     code: 'NOT',
-    description: '查询条件的逻辑否定修饰符, 条件的逆命题',
+    description: '否定, 查询条件的逻辑否定修饰符, 条件的逆命题',
     syntax: 'NOT <条件>',
     example: 'NOT host'
   },
   'to': {
-    label: '范围描述',
+    label: 'TO',
     tag: '关键词',
     mapping: 'to',
     code: 'TO',
@@ -61,11 +61,11 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     example: 'APP_CODE=[1992 TO 2001]'
   },
   'search': {
-    label: '子查询',
+    label: 'search',
     tag: '关键词',
     mapping: 'search',
     code: 'search',
-    description: '作为条件的查询语句',
+    description: '子查询, 作为条件的查询语句',
     syntax: '<条件> <AND/OR> (search <子条件>)',
     example: 'host=localhost AND (search domain=*.bizseer.com)'
   },
@@ -258,7 +258,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     example: '* | sort by _event_time'
   },
   'group_by': {
-    label: '按指定字段分组',
+    label: 'Group by',
     tag: '关键词',
     mapping: 'group_by',
     code: 'by',
@@ -267,7 +267,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     example: '* | stats count(amount) by year'
   },
   'alias': {
-    label: '指定别名',
+    label: 'As',
     tag: '关键词',
     mapping: 'alias',
     code: 'as',
@@ -276,7 +276,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     example: '* | stats count(amount) as amt'
   },
   'stats': {
-    label: '聚合统计操作',
+    label: 'stats 统计',
     tag: '关键词',
     mapping: 'stats',
     code: 'stats',
@@ -285,20 +285,20 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     example: '* | stats count(amount) as amt by year'
   },
   'pipe': {
-    label: '管道符',
+    label: '|',
     tag: '符号',
     mapping: 'pipe',
     code: '|',
-    description: '连接数据操作',
+    description: '管道符, 连接数据操作',
     syntax: '*[|<操作1>...]',
     example: '* | stats count(amount) as amt | fields amt'
   },
   'quote': {
-    label: '双引号',
+    label: '"',
     tag: '符号',
     mapping: 'quote',
     code: '"',
-    description: '包裹词组的符号',
+    description: '双引号, 包裹词组的符号',
     syntax: '"<关键词1> <关键词2>[ <关键词3>...]"',
     example: '"local host"'
   },
@@ -309,16 +309,18 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     code: '',
   },
   'slash': {
-    label: '正则界定符 或 除法算术运算符',
+    label: '/',
     tag: '符号',
     mapping: 'slash',
     code: '/',
+    description: '正则界定符 或 除法算术运算符'
   },
   'comma': {
-    label: '逗号',
+    label: ',',
     tag: '符号',
     mapping: 'comma',
-    code: ','
+    code: ',',
+    description: '逗号'
   },
   'regexp': {
     label: '正则表达式',
@@ -327,79 +329,79 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     code: ''
   },
   'L_L_Bracket': {
-    label: '左大括号',
+    label: '{',
     tag: '符号',
     mapping: 'L_L_Bracket',
     code: '{',
     description: '可用作左开区间'
   },
   'R_L_Bracket': {
-    label: '右大括号',
+    label: '}',
     tag: '符号',
     mapping: 'R_L_Bracket',
     code: '}',
     description: '可用作右开区间'
   },
   'L_M_Bracket': {
-    label: '左中括号',
+    label: '[',
     tag: '符号',
     mapping: 'L_M_Bracket',
     code: '[',
     description: '可用作左闭区间'
   },
   'R_M_Bracket': {
-    label: '右中括号',
+    label: ']',
     tag: '符号',
     mapping: 'R_M_Bracket',
     code: ']',
     description: '可用作右闭区间'
   },
   'L_S_Bracket': {
-    label: '左小括号',
+    label: '(',
     tag: '符号',
     mapping: 'L_S_Bracket',
     code: '(',
     description: '可用作提升条件优先级或函数调用'
   },
   'R_S_Bracket': {
-    label: '右小括号',
+    label: ')',
     tag: '符号',
     mapping: 'R_S_Bracket',
     code: ')',
     description: '可用作提升条件优先级或函数调用'
   },
   'equal': {
-    label: '等于号',
+    label: '=',
     tag: '符号',
     mapping: 'equal',
     code: '=',
   },
   'greater_than': {
-    label: '大于号',
+    label: '>',
     tag: '符号',
     mapping: 'greater_than',
     code: '>'
   },
   'less_than': {
-    label: '小于号',
+    label: '<',
     tag: '符号',
     mapping: 'less_than',
     code: '<'
   },
   'plus': {
-    label: '加法算术运算符',
+    label: '+',
     tag: '符号',
     mapping: 'plus',
     code: '+',
   },
   'minus': {
-    label: '减法算术运算符',
+    label: '-',
     tag: '符号',
     mapping: 'minus',
     code: '-'
   },
   'times': {
-    label: '乘法算术运算符',
+    label: '*',
     tag: '符号',
     mapping: 'times',
     code: '*'
