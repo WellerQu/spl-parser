@@ -571,5 +571,12 @@ describe('高级查询', () => {
         }
       })
     })
+
+    it('系统字段类型不支持算术运算, 预期报错', () => {
+      expect(() => {
+        transfer('* | eval newAmt = ceil(_data_source + 2)')
+      })
+        .toThrowError('字段 "_data_source" 的类型 "[string]" 不支持此操作')
+    })
   })
 })
