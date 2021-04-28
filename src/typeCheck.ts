@@ -162,8 +162,8 @@ const checkCommands: Checker = mapping => ast => {
 /**
  * 递归检查运算表达式字段
 * */
-function ergodic(arr: ast.ExprAstNode[] | ast.ExprAstNode[][], mapping: Map<string, TypeInfo[]>) {
-  arr.forEach((item: ast.ExprAstNode | ast.ExprAstNode[]) => {
+function ergodic(arr: ast.EvaluationExprNode[] | ast.EvaluationExprNode[][], mapping: Map<string, TypeInfo[]>) {
+  arr.forEach((item: ast.EvaluationExprNode | ast.EvaluationExprNode[]) => {
     if (Array.isArray(item)) {
       ergodic(item, mapping)
     } else if (!Array.isArray(item) && item.type === 'field') {

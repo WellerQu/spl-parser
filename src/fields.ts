@@ -1,5 +1,5 @@
 import { OperationError } from './errors'
-import { format } from './utils/format'
+import { typing } from './transpiler/formatters'
 
 /**
  * 从语法树中获取字段列表
@@ -19,7 +19,7 @@ function getFieldsFromQuery(query: ast.Query): Field[] {
         fields.push({
           ...condition.value,
           location: 'condition',
-          formatName: format(condition.value)
+          formatName: typing(condition.value)
         })
       }
 
@@ -55,7 +55,7 @@ function getFieldsFromOperation(operations: ast.Operation[]): Field[] {
     fields.push({
       fieldName: item.fieldName,
       fieldType: item.fieldType,
-      formatName: format(item),
+      formatName: typing(item),
       location: 'statistic aggr' 
     })
   }
@@ -64,7 +64,7 @@ function getFieldsFromOperation(operations: ast.Operation[]): Field[] {
     fields.push({
       fieldName: item.fieldName,
       fieldType: item.fieldType,
-      formatName: format(item),
+      formatName: typing(item),
       location: 'statistic group'
     })
   }
