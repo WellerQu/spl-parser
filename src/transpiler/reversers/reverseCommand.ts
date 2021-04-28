@@ -8,6 +8,11 @@ import { evaluationExpr } from '../evaluationExpr'
  */
 const raw = (field: ast.Field) => field.fieldName
 
+/**
+ * 将抽象语法树反向解析为 SPL 字符串
+ * @param ast 抽象语法树
+ * @returns SPL 字符串
+ */
 export const reverseCommand: Reverser = ast => spl => {
   const [, , commands] = ast
   if (!commands) {
