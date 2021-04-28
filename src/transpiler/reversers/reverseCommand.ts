@@ -9,6 +9,19 @@ import { evaluationExpr } from '../evaluationExpr'
 const raw = (field: ast.Field) => field.fieldName
 
 /**
+ * 取出字段名
+ * @param field 抽象语法树中的排序字段
+ * @returns 带有排序规则标识的字段名
+ */
+const order = (field: ast.SortField) => field.fieldName + (
+  field.order === 'asc'
+    ? '+'
+    : field.order === 'desc'
+      ? '-'
+      : ''
+)
+
+/**
  * 将抽象语法树反向解析为 SPL 字符串
  * @param ast 抽象语法树
  * @returns SPL 字符串
@@ -26,11 +39,11 @@ export const reverseCommand: Reverser = ast => spl => {
   // 逆向解析命令
   for (const cmd of commands) {
     if (cmd.type === 'fields') {
-      result.push(`${cmd.type} ${cmd.value.map(item => item.fieldName).join(',')}`)
+      result.push(`${cmd.type} ${cmd.value.map(raw).join(',')}`)
     } else if (cmd.type === 'limit') {
       result.push(`${cmd.type} ${cmd.value}`)
     } else if (cmd.type === 'sort') {
-      result.push(`sort by ${cmd.value.map(item => item.fieldName).join(',')}`)
+      result.push(`sort by ${cmd.value.map(order).join(',')}`)
     } else if (cmd.type === 'eval') {
       const params = cmd.value.params.n2
         ? `${evaluationExpr(cmd.value.params.n1, raw)},${evaluationExpr(cmd.value.params.n2, raw)}`
