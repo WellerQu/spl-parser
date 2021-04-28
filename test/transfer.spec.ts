@@ -199,7 +199,8 @@ describe('高级查询', () => {
       ['path', ['string']],
       ['hostname', ['string']],
       ['timestamp', ['string']],
-      ['offset', ['string']]
+      ['offset', ['string']],
+      ['_event_time', ['number', 'string']]
     ])
   })
 
@@ -552,6 +553,15 @@ describe('高级查询', () => {
         }
       })
 
+      const dslSystemFieldName = transfer('* | eval newFieldName=max(_event_time*(3+4), 2)')
+      expect(dslSystemFieldName.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            'lang': 'painless',
+            'source': 'Math.max(doc[\'_event_time\'].value*(3+4), 2)'
+          }
+        }
+      })
     })
   })
 })

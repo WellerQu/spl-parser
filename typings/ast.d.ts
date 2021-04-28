@@ -58,7 +58,7 @@ declare namespace ast {
   /**
    * 运算语法树数字和运算符节点
    */
-  type numAndOperatorNode = {
+  type NumAndOperatorNode = {
     type: 'number' | 'operator'
     value: string
   }
@@ -66,7 +66,7 @@ declare namespace ast {
   /**
   * 运算语法树field节点
   */
-  type fieldNode = {
+  type FieldNode = {
     type: 'field'
     value: Field
   }
@@ -74,7 +74,7 @@ declare namespace ast {
   /**
    * eval表达式运算语法树节点
    */
-  type ExprAstNode = numAndOperatorNode | fieldNode
+  type ExprAstNode = NumAndOperatorNode | FieldNode
 
   /**
    * eval表达式语法树节点
