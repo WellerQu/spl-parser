@@ -9,7 +9,7 @@ import { pipe } from '../utils/pipe'
 const formatDocFieldName = pipe(format, (name: string) => `doc['${name}'].value`)
 
 /**
- * 解析出 eval 命令中的表达式
+ * evaluation算术表达式转字符串
  * @param ast eval相关函数的运算式抽象语法树
  * @returns eval相关函数的运算式
  */

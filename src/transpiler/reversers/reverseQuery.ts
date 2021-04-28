@@ -1,4 +1,4 @@
-import { groups2string } from '../groups2string'
+import { conditionExpr } from '../conditionExpr'
 
 export const reverseQuery: Reverser = ast => spl => {
   const [query] = ast
@@ -6,5 +6,5 @@ export const reverseQuery: Reverser = ast => spl => {
     return spl
   }
 
-  return spl + groups2string(query, '=', (field) => field.fieldName)
+  return spl + conditionExpr(query, '=', (field) => field.fieldName)
 }

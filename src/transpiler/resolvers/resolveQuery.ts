@@ -1,4 +1,4 @@
-import { groups2string } from '../groups2string'
+import { conditionExpr } from '../conditionExpr'
 
 
 /**
@@ -12,7 +12,7 @@ export const resolveQuery: Resolver = ast => dsl => {
     return dsl
   }
 
-  dsl.query.query_string.query = groups2string(query, ':')
+  dsl.query.query_string.query = conditionExpr(query, ':')
 
   return dsl
 }
