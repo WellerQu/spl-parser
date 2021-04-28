@@ -180,7 +180,8 @@ const parseExpr = (ast: ast.ExprAstNode | ast.ExprAstNode[]): string => {
       }
 
       if (item.type === 'field') {
-        cur = `doc['${item.value.fieldName}_${item.value.fieldType}'].value`
+        const fieldName = format(item.value)
+        cur = `doc['${fieldName}'].value`
         operator += cur
 
       } else if (['operator', 'number'].includes(item.type)) {
