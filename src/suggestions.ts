@@ -428,7 +428,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
   },
   'fieldValue': {
     label: '可选字段值',
-    tag: '通用',
+    tag: '字段值',
     mapping: 'fieldValue',
     code: ''
   }, 
