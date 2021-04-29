@@ -84,7 +84,7 @@ KeyValue =
   fieldName:FieldName
   Space* Equal Space*
   field:(
-    Quote value:QuoteStr? Quote { return fieldNode(fieldName, "string", value) }
+    Quote value:QuoteStr? Quote { return fieldNode(fieldName, "quote", value ? value : '') }
     / Slash value:RegExpStr Slash { return fieldNode(fieldName, "regexp", value) }
     / value:RangeValue { return fieldNode(fieldName, "range", value) }
     / value:FieldValue { return fieldNode(fieldName, isNaN(value) ? "string" : "number", isNaN(value) ? value : +value) }
@@ -105,10 +105,7 @@ RangeValue =
  */
 _Exist_ =
   _exists_ Space* Equal Space*
-  field:(
-    Quote str:QuoteStr? Quote { return fieldNode("_exists_", "string", str) }
-    / str:Identifier { return fieldNode("_exists_", "string", str) }
-  ) { return conditionNode('KeyValue', field, []) }
+  field:FieldName { return conditionNode('KeyValue', fieldNode("_exists_", "string", field), []) }
 
 /**
  * 联合多个条件作为一个条件, 可以嵌套

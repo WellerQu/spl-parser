@@ -4,6 +4,7 @@ declare namespace ast {
    * 字段值类型枚举
    */
   enum FieldValueType {
+    quote = 'quote',
     number = 'number',
     string = 'string',
     time = 'time',
