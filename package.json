@@ -1,6 +1,6 @@
 {
   "name": "spl-parser",
-  "version": "2.5.2",
+  "version": "2.6.0",
   "description": "SPL 转译为 Elasticsearch DSL",
   "main": "dist/index.js",
   "typings": "dist",
