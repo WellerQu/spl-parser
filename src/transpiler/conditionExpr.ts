@@ -1,18 +1,6 @@
 import { ConditionError } from '../errors'
 import { typing } from './formatters'
 
-const stringify = (value: unknown): string => {
-  if (typeof value !== 'string') {
-    return value ? (value + '') : ''
-  }
-
-  if (value.includes(' ') || value.length === 0) {
-    return `"${value}"`
-  }
-
-  return value
-}
-
 /**
  * 条件组转字符串
  * @param query 抽象语法树的查询段
@@ -32,7 +20,7 @@ export const conditionExpr = (query: Ast[0], separator: string, format = typing)
         const fieldName = format(condition.value)
 
         if (fieldType === 'string')  
-          result.push(`${fieldName}${separator}${stringify(fieldValue)}`)
+          result.push(`${fieldName}${separator}${fieldValue}`)
         else if (fieldType === 'quote')
           result.push(`${fieldName}${separator}"${fieldValue}"`)
         else if (fieldType === 'number')
