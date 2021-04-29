@@ -19,16 +19,19 @@ export const conditionExpr = (query: Ast[0], separator: string, format = typing)
         const { fieldType, fieldValue } = condition.value
         const fieldName = format(condition.value)
 
-        if (fieldType === 'string')
-          result.push(`${fieldName}${separator}"${fieldValue ?? ''}"`)
+        if (fieldType === 'string')  
+          result.push(`${fieldName}${separator}${fieldValue}`)
+        else if (fieldType === 'quote')
+          result.push(`${fieldName}${separator}"${fieldValue}"`)
         else if (fieldType === 'number')
           result.push(`${fieldName}${separator}${fieldValue}`)
         else if (fieldType === 'regexp')
           result.push(`${fieldName}${separator}/${fieldValue}/`)
         else if (fieldType === 'range')
           result.push(`${fieldName}${separator}${fieldValue}`)
-        else if (fieldType === 'time')
-          throw new ConditionError('Not Implemented: field type is time')
+        else
+          throw new ConditionError(`尚未支持的字段类型 ${fieldType}`)
+
       } else if (condition.type === 'SubQuery') {
         result.push('(' + conditionExpr(condition.value, separator, format) + ')')
       } else {

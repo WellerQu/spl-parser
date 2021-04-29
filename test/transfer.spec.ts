@@ -42,16 +42,16 @@ describe('全文检索', () => {
 describe('字段检索', () => {
   const transfer = transferFactory({
     typeMapping: new Map<string, TypeInfo[]>([
-      ['host', ['string', 'regexp']],
-      ['type', ['string']],
-      ['_exists_', ['string']],
+      ['host', ['string', 'regexp', 'quote']],
+      ['type', ['string', 'quote']],
+      ['_exists_', ['string', 'quote']],
     ])
   })
 
   it('字段host中包含localhost的日志', () => {
     {
       const dsl = transfer('host=localhost')
-      expect(dsl.query.query_string.query).toBe('host_string:"localhost"')
+      expect(dsl.query.query_string.query).toBe('host_string:localhost')
     }
 
     {
@@ -68,12 +68,7 @@ describe('字段检索', () => {
   it('存在字段type的⽇志', () => {
     {
       const dsl = transfer('_exists_=type')
-      expect(dsl.query.query_string.query).toBe('_exists_:"type"')
-    }
-
-    {
-      const dsl = transfer('_exists_="type"')
-      expect(dsl.query.query_string.query).toBe('_exists_:"type"')
+      expect(dsl.query.query_string.query).toBe('_exists_:type')
     }
   })
 
@@ -85,7 +80,7 @@ describe('字段检索', () => {
   it('type 字段不支持正则检索', () => {
     expect(() => {
       transfer('type=/int/')
-    }).toThrow('字段 "type" 的类型 "[string]" 不支持此操作')
+    }).toThrow('字段 "type" 的类型 "[string,quote]" 不支持 regexp 的运算')
 
   })
 
@@ -115,8 +110,8 @@ describe('OR, AND, NOT', () => {
   const transfer = transferFactory()
 
   it('OR连接', () => {
-    const dsl = transfer('type="online offline" OR _exists_="type"')
-    expect(dsl.query.query_string.query).toBe('type_string:"online offline" OR _exists_:"type"')
+    const dsl = transfer('type="online offline" OR _exists_=type')
+    expect(dsl.query.query_string.query).toBe('type_string:"online offline" OR _exists_:type')
   })
 
   it('AND连接', () => {
@@ -130,8 +125,8 @@ describe('OR, AND, NOT', () => {
   })
 
   it('联合条件', () => {
-    const dsl = transfer('type=abc AND (host=local? OR host=*host) AND NOT type=cde')
-    expect(dsl.query.query_string.query).toBe('type_string:"abc" AND (host_string:"local?" OR host_string:"*host") AND NOT type_string:"cde"')
+    const dsl = transfer('type=abc AND (host=local? OR host=*host) AND NOT type="cde*"')
+    expect(dsl.query.query_string.query).toBe('type_string:abc AND (host_string:local? OR host_string:*host) AND NOT type_string:"cde*"')
   })
 
   it('子查询', () => {
@@ -145,12 +140,12 @@ describe('通配符', () => {
   const transfer = transferFactory()
   it('通配符 * 表示0个或多个字符', () => {
     const dsl = transfer('type=*line*')
-    expect(dsl.query.query_string.query).toBe('type_string:"*line*"')
+    expect(dsl.query.query_string.query).toBe('type_string:*line*')
   })
 
   it('使用通配符 ? 来代替⼀个字符', () => {
     const dsl = transfer('host=local?ost')
-    expect(dsl.query.query_string.query).toBe('host_string:"local?ost"')
+    expect(dsl.query.query_string.query).toBe('host_string:local?ost')
   })
 })
 
@@ -356,7 +351,7 @@ describe('高级查询', () => {
       expect(() => {
         transfer('* | stats min(_data_source)')
       })
-      .toThrowError('字段 "_data_source" 的类型 "[string]" 不支持此操作')
+        .toThrowError('字段 "_data_source" 的类型 "[string]" 不支持 number 的运算')
     })
   })
 
@@ -576,7 +571,7 @@ describe('高级查询', () => {
       expect(() => {
         transfer('* | eval newAmt = ceil(_data_source + 2)')
       })
-        .toThrowError('字段 "_data_source" 的类型 "[string]" 不支持此操作')
+        .toThrowError('字段 "_data_source" 的类型 "[string]" 不支持 number 的运算')
     })
   })
 })

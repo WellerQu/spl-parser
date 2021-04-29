@@ -45,7 +45,7 @@ function checkTypeBaseOnMapping(field: ast.Field, mapping: Map<string, TypeInfo[
 
   // 字段当前的操作不被支持
   if (!types.includes(field.fieldType)) {
-    throw new FieldTypeError(`字段 "${field.fieldName}" 的类型 "[${types.join(',')}]" 不支持此操作`)
+    throw new FieldTypeError(`字段 "${field.fieldName}" 的类型 "[${types.join(',')}]" 不支持 ${field.fieldType} 的运算`)
   }
 }
 
