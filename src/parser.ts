@@ -1,4 +1,5 @@
 import peg, { PegjsError } from 'pegjs'
+import { SUGGESTIONS } from './suggestions'
 import { grammar } from './grammar'
 
 export type ExpectedItem = peg.ExpectedItem
@@ -21,7 +22,7 @@ const parser = peg.generate(grammar.replace('[ \r\n\t]',  '[ \\r\\n\\t]'))
  * @param input 用户输入的SPL
  * @returns 抽象语法树, 建议
  */
-export function tryParse(input: string): [Ast | undefined, string[], string | undefined] | never {
+export function tryParse(input: string): [Ast | undefined, SuggestionItem[], string | undefined] | never {
   try {
     return [parse(input), [], undefined]
   } catch (error) {
@@ -29,6 +30,7 @@ export function tryParse(input: string): [Ast | undefined, string[], string | un
     if (isPEGSyntaxError(error)) {
       const expected = error.expected ?? []
       const keys = new Set<string>()
+      const items: SuggestionItem[] = []
 
       for (const item of expected) {
         if (keys.has(item.description)) {
@@ -36,9 +38,16 @@ export function tryParse(input: string): [Ast | undefined, string[], string | un
         }
 
         keys.add(item.description)
+
+        const suggestion = SUGGESTIONS[item.description as SuggestionMapping]
+        if (!suggestion) {
+          continue
+        }
+
+        items.push(suggestion)
       }
 
-      return [undefined, Array.from(keys.values()), error.found]
+      return [undefined, items, error.found]
     }
 
     throw error
