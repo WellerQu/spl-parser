@@ -2,3 +2,4 @@
 .eslintcache
 jest.config.js
 commitlint.config.js
+dist
