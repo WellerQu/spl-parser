@@ -7,25 +7,30 @@
 ```typescript
 // # typescript
 
-import { toDSL } from 'spl-parser'
+import { transferFactory } from 'spl-parser'
 
-const dsl: ESQuery = toDSL('* | stats count(_application) as cnt')
+const transfer = transferFactory()
+const dsl: elasticsearch.ESQuery = transfer('* | stats count(_application) as cnt')
 
 /*
-export interface ESQuery {
-  fields: [string, FieldValueType][] | undefined
-  // 查询语句
+interface ESQuery {
+  // NOTE: ES DSL 要求的命名风格
   query: {
-    // NOTE: ES DSL 要求的命名风格
     'query_string': {
       query: string,
-    },
+      'default_field': '_message'
+    }
   },
-  aggs: unknown
-  sort: Sort[] | undefined,
-  from: number | undefined,
-  size: number | undefined,
-  _source: string[] | undefined
+  from?: number
+  size?: number
+  _source?: string[]
+  aggs?: ESQueryStatisticAggr,
+  sort?: ESQuerySort[] | undefined
+  'script_fields'?: ScriptFields
 }
 */
 ```
+
+## 更多用法
+
+参考测试用例
