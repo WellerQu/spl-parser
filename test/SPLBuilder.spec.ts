@@ -3,11 +3,16 @@
 import { append } from '../src/SPLBuilder'
 
 describe('SPL 语句构造器', () => {
-  it.each([
-    ['*', '(*) AND abc=123'],
-    ['a=b AND b=c', '(a=b AND b=c) AND abc=123'],
-    ['a=2 OR b=3', '(a=2 OR b=3) AND abc=123']
-  ])('在仅有查询条件的情况下, 追加查询条件', (src, dst) => {
+  it.each<[string, ast.ConditionLinker, string]>([
+    ['', 'AND', 'abc=123'],
+    ['*', 'AND', '(*) AND abc=123'],
+    ['a=b AND b=c', 'AND', '(a=b AND b=c) AND abc=123'],
+    ['a=2 OR b=3', 'AND', '(a=2 OR b=3) AND abc=123'],
+    ['', 'OR', 'abc=123'],
+    ['*', 'OR', '(*) OR abc=123'],
+    ['a=b AND b=c', 'OR', '(a=b AND b=c) OR abc=123'],
+    ['a=2 OR b=3', 'OR', '(a=2 OR b=3) OR abc=123']
+  ])('在仅有查询条件的情况下, 追加 AND 查询条件', (src, linker, dst) => {
       const spl = append(src, {
         type: 'KeyValue',
         value: {
@@ -16,7 +21,7 @@ describe('SPL 语句构造器', () => {
           fieldValue: '123'
         },
         decorator: []
-      })
+      }, linker)
 
       expect(spl).toBe(dst)
   })

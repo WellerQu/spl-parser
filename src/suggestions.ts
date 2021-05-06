@@ -1,5 +1,3 @@
-import { tryParse } from './parser'
-
 /**
  * 建议项详情, 与 PEGJS 语法文件 grammar.ts 中的词法器部分呈一一对应关系
  * 
@@ -438,25 +436,4 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'identifier',
     code: ''
   }
-}
-
-/**
- * 根据用户的输入, 提供接下来的输入建议
- * @param input 用户输入 SPL
- * @returns 建议列表
- */
-export function getSuggestions(input: string): [SuggestionItem[], string | undefined] {
-  const items: SuggestionItem[] = []
-
-  const [, suggestionMetadata, found] = tryParse(input)
-  for (const meta of suggestionMetadata) {
-    const suggestion = SUGGESTIONS[meta as SuggestionMapping]
-    if (!suggestion) {
-      continue
-    }
-
-    items.push(suggestion)
-  }
-
-  return [items, found]
 }

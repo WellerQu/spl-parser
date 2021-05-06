@@ -10,8 +10,6 @@ import { resolve, DSLRemoveAggs, DSLRemovePagination, DSLRemoveScriptField, DSLR
 import { getFields } from './fields'
 import { getKeywords } from './keywords'
 
-export { getSuggestions, SUGGESTIONS } from './suggestions'
-
 export { append } from './SPLBuilder'
 
 export interface TransferOptions {

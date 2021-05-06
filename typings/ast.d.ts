@@ -102,6 +102,11 @@ declare namespace ast {
   }
 
   /**
+   * 条件连接符
+   */
+  type ConditionLinker = 'AND' | 'OR'
+
+  /**
    * 条件抽象语法树节点数据类型映射
    */
   type ConditionNodeType = {
