@@ -17,7 +17,7 @@ function isQuery(condition: ast.Condition | ast.Query | string): condition is as
   return ('groups' in condition)
 }
 
-function build(condition: ast.Condition | ast.Query | string): ast.Condition {
+function prepare(condition: ast.Condition | ast.Query | string): ast.Condition {
   if (isCondition(condition)) {
     return condition
   }
@@ -49,14 +49,14 @@ export function append(spl: string, condition: ast.Query, conditionLinker?: ast.
 export function append(spl: string, condition: ast.Condition, conditionLinker?: ast.ConditionLinker): string
 export function append(spl: string, condition: string, conditionLinker?: ast.ConditionLinker): string
 export function append(spl: string, condition: ast.Condition | ast.Query | string, conditionLinker: ast.ConditionLinker = 'AND'): string {
-  const prepare = build(condition)
+  const present = prepare(condition)
 
   // 如果 SPL 语句本身没有内容, 那么追加的条件就是唯一的条件
   if (!spl || spl.trim().length === 0) {
     return reverse([
       {
         groups: [{
-          conditions: [prepare]
+          conditions: [present]
         }]
       },
       [],
@@ -76,7 +76,7 @@ export function append(spl: string, condition: ast.Condition | ast.Query | strin
   if (conditionLinker === 'AND') {
     ast[0] = {
       groups: [{
-        conditions: [subQueryCondition, prepare]
+        conditions: [subQueryCondition, present]
       }]
     }
   } 
@@ -86,7 +86,7 @@ export function append(spl: string, condition: ast.Condition | ast.Query | strin
       groups: [{
         conditions: [subQueryCondition]
       }, {
-        conditions: [prepare]
+        conditions: [present]
       }]
     }
   }
