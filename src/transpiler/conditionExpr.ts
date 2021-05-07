@@ -33,7 +33,7 @@ export const conditionExpr = (query: Ast[0], separator: string, format = typing)
           throw new ConditionError(`尚未支持的字段类型 ${fieldType}`)
 
       } else if (condition.type === 'SubQuery') {
-        result.push('(' + conditionExpr(condition.value, separator, format) + ')')
+        result.push(condition.value.groups.length > 1 ? '(' + conditionExpr(condition.value, separator, format) + ')' : conditionExpr(condition.value, separator, format))
       } else {
         throw new ConditionError(`尚未支持的查询条件 ${condition.type}`)
       }
