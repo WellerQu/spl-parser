@@ -15,7 +15,10 @@ function isPEGSyntaxError(error: any): error is PegjsError {
 /**
  * 语法解析器
  */
-const parser = peg.generate(grammar.replace('[ \r\n\t]',  '[ \\r\\n\\t]'))
+const parser = peg.generate(
+  grammar
+    .replace('[ \r\n\t]',  '[ \\r\\n\\t]')
+)
 
 /**
  * 尝试将用户输入的SPL解析成抽象语法树, 若解析失败, 则根据语法规则返回对应的建议

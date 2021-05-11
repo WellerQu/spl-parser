@@ -35,3 +35,17 @@ describe('字段值提示', () => {
     expect(suggestions).toContain(SUGGESTIONS['fieldValue'])
   })
 })
+
+describe('区分相同规则的词法', () => {
+  it('* | stats ', () => {
+    const [, suggestions] = tryParse('* | stats ')
+    expect(suggestions).toContain(SUGGESTIONS['maxS'])
+    expect(suggestions).toContain(SUGGESTIONS['minS'])
+  })
+
+  it('* | eval a=', () => {
+    const [, suggestions] = tryParse('* | eval a=')
+    expect(suggestions).toContain(SUGGESTIONS['maxE'])
+    expect(suggestions).toContain(SUGGESTIONS['minE'])
+  })
+})

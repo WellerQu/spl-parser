@@ -37,12 +37,12 @@ SPL = Query Operation* UniversalCommands*
 /**
  * 对查询结果进行特殊操作
  */
-Operation = Space* Pipe Space* operation:(Statistic) { return operation }
+Operation = Space Pipe Space operation:(Statistic) { return operation }
 
 /**
  * 对查询结果进行通用操作
  */
-UniversalCommands = Space* Pipe Space* command:(Sort/Top/Rare/Head/Tail/Limit/Fields/Table/Transaction/Evaluation) { return command }
+UniversalCommands = Space Pipe Space command:(Sort/Top/Rare/Head/Tail/Limit/Fields/Table/Transaction/Evaluation) { return command }
 
 // -------------------------------------- 查询开始 --------------------------------------
 /**
@@ -136,7 +136,7 @@ Statistic =
  * 统计的聚合字段
  */
 StatsField =
-  aggr:(Count/Min/Max/Sum/Avg/DC)
+  aggr:(Count/MinS/MaxS/Sum/Avg/DC)
   Space* L_S_Bracket Space*
   field:FieldName
   filter:StatsBeforeFilter?
@@ -169,7 +169,7 @@ StatsBeforeFilter =
   L_M_Bracket Space* FilterF Space+ expr:MetricFuncExpr Space* R_M_Bracket { return expr }
 
 StatsAfterFilter =
-  Space* Pipe Space* FilterF Space+ expr:MetricFuncExpr moreExprs:(Space* Comma Space* next:MetricFuncExpr { return next })* { return [expr, ...moreExprs] }
+  Space Pipe Space FilterF Space+ expr:MetricFuncExpr moreExprs:(Space* Comma Space* next:MetricFuncExpr { return next })* { return [expr, ...moreExprs] }
 
 MetricFuncExpr =
   field:FieldName Space* operator:(Equal/Gt/Lt) Space* value:Num { return { ...fieldNode(field, 'number', value), operator} }
@@ -247,7 +247,7 @@ Unary =
  * 二元操作
  */
 Binary =
-  fn:(Max/Min) Space* L_S_Bracket Space* n1:Expr Space* Comma Space* n2:Expr Space* R_S_Bracket { return { fn, params: {n1, n2}} }
+  fn:(MaxE/MinE) Space* L_S_Bracket Space* n1:Expr Space* Comma Space* n2:Expr Space* R_S_Bracket { return { fn, params: {n1, n2}} }
 
 /**
  * 四则运算
@@ -288,8 +288,10 @@ NOT "not" = "NOT"
 TO "to" = "TO"
 Search "search" = "search"
 Count "count" = "count"
-Min "min" = "min"
-Max "max" = "max"
+MinS "minS" = "min"
+MaxS "maxS" = "max"
+MinE "minE" = "min"
+MaxE "maxE" = "max"
 Avg "avg" = "avg"
 Sum "sum" = "sum"
 DC "distinct_count" = "dc"

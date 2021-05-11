@@ -76,19 +76,37 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     syntax: '* | stats count(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats count(app_code)'
   },
-  'min': {
+  'minS': {
     label: 'min 函数',
     tag: '函数',
-    mapping: 'min',
+    mapping: 'minS',
     code: 'min',
     description: '求参数所有值中的最小值',
     syntax: '* | stats min(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats min(amount)'
   },
-  'max': {
-    label: 'max: 函数',
+  'maxS': {
+    label: 'max 函数',
     tag: '函数',
-    mapping: 'max',
+    mapping: 'maxS',
+    code: 'max',
+    description: '求参数所有值中的最大值',
+    syntax: '* | stats max(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    example: '* | stats max(amount)'
+  },
+  'minE': {
+    label: 'min 函数',
+    tag: '函数',
+    mapping: 'minE',
+    code: 'min',
+    description: '求参数所有值中的最小值',
+    syntax: '* | stats min(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    example: '* | stats min(amount)'
+  },
+  'maxE': {
+    label: 'max 函数',
+    tag: '函数',
+    mapping: 'maxE',
     code: 'max',
     description: '求参数所有值中的最大值',
     syntax: '* | stats max(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
