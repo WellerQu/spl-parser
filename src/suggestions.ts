@@ -73,7 +73,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'count',
     code: 'count',
     description: '求参数所有值的出现的次数',
-    syntax: '* | stats count(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    syntax: '<查询> | stats count(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats count(app_code)'
   },
   'minS': {
@@ -82,7 +82,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'minS',
     code: 'min',
     description: '求参数所有值中的最小值',
-    syntax: '* | stats min(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    syntax: '<查询> | stats min(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats min(amount)'
   },
   'maxS': {
@@ -91,7 +91,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'maxS',
     code: 'max',
     description: '求参数所有值中的最大值',
-    syntax: '* | stats max(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    syntax: '<查询> | stats max(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats max(amount)'
   },
   'minE': {
@@ -100,8 +100,8 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'minE',
     code: 'min',
     description: '求参数所有值中的最小值',
-    syntax: '* | stats min(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
-    example: '* | stats min(amount)'
+    syntax: '<查询> | eval <自定义字段名>=min(<组合算术表达式>, <组合算术表达式>)',
+    example: '* | eval amt=min(amount1, amount2)'
   },
   'maxE': {
     label: 'max 函数',
@@ -109,8 +109,8 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'maxE',
     code: 'max',
     description: '求参数所有值中的最大值',
-    syntax: '* | stats max(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
-    example: '* | stats max(amount)'
+    syntax: '<查询> | eval <自定义字段名>=max(<组合算术表达式>, <组合算术表达式>)',
+    example: '* | eval amt=max(amount1, amount2)'
   },
   'avg': {
     label: 'avg 函数',
@@ -118,7 +118,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'avg',
     code: 'avg',
     description: '求参数所有值的平均值',
-    syntax: '* | stats avg(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    syntax: '<查询> | stats avg(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats avg(amount)'
   },
   'sum': {
@@ -127,7 +127,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'sum',
     code: 'sum',
     description: '求参数所有值的总和',
-    syntax: '* | stats sum(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    syntax: '<查询> | stats sum(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats sum(amount)'
   },
   'distinct_count': {
@@ -136,7 +136,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'distinct_count',
     code: 'dc',
     description: '求参数所有值的去重后出现的次数',
-    syntax: '* | stats dc(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
+    syntax: '<查询> | stats dc(<字段名>) [as <别名>] [by <排序字段1>[,<排序字段2>...]]',
     example: '* | stats dc(app_code)',
     disabled: true
   },
@@ -146,7 +146,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'ceil',
     code: 'ceil',
     description: '求参数向上取整后的值',
-    syntax: '* | eval <计算列名称>=ceil(<表达式>)',
+    syntax: '<查询> | eval <计算列名称>=ceil(<组合算术表达式>)',
     example: '* | eval computed_amount=ceil(amount + 100)'
   },
   'floor': {
@@ -155,7 +155,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'floor',
     code: 'floor',
     description: '求参数向下取整后的值',
-    syntax: '* | eval <计算列名称>=floor(<表达式>)',
+    syntax: '<查询> | eval <计算列名称>=floor(<组合算术表达式>)',
     example: '* | eval computed_amount=floor(amount / 2)'
   },
   'abs': {
@@ -164,7 +164,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'abs',
     code: 'abs',
     description: '求参数的绝对值',
-    syntax: '* | eval <计算列名称>=abs(<表达式>)',
+    syntax: '<查询> | eval <计算列名称>=abs(<组合算术表达式>)',
     example: '* | eval computed_amount=abs(amount - 100)'
   },
   'evaluation': {
@@ -173,7 +173,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'evaluation',
     code: 'eval',
     description: '计算组合值',
-    syntax: '* | eval <计算列名称>=<函数>(<表达式>)',
+    syntax: '<查询> | eval <计算列名称>=<函数>(<组合算术表达式>[,<组合算术表达式>])',
     example: '* | eval new_name=abs(amount - 100)'
   },
   'limit': {
@@ -182,7 +182,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'limit',
     code: 'limit',
     description: '限制查询结果的最大条数',
-    syntax: '* | limit <正正数>',
+    syntax: '<查询> | limit <正正数>',
     example: '* | limit 10'
   },
   'head': {
@@ -191,7 +191,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'head',
     code: 'head',
     description: '取查询结果的前 N 条数据, 与 limit 命令相同',
-    syntax: '* | head <正正数>',
+    syntax: '<查询> | head <正正数>',
     example: '* | head 10',
     disabled: true
   },
@@ -201,7 +201,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'tail',
     code: 'tail',
     description: '取查询结果的后 N 条数据',
-    syntax: '* | tail <正正数>',
+    syntax: '<查询> | tail <正正数>',
     example: '* | tail 10',
     disabled: true
   },
@@ -211,7 +211,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'top',
     code: 'top',
     description: '统计field的数量, 并取前 N 条记录, 与 rare 命令相同',
-    syntax: '* | top <正整数> <字段名>',
+    syntax: '<查询> | top <正整数> <字段名>',
     example: '* | top 5 lastName',
     disabled: true
   },
@@ -221,7 +221,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'rare',
     code: 'rare',
     description: '统计field的数量, 并取前 N 条记录, 与 top 命令相同',
-    syntax: '* | rare <正整数> <字段名>',
+    syntax: '<查询> | rare <正整数> <字段名>',
     example: '* | rare 5 lastName',
     disabled: true
   },
@@ -231,7 +231,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'filter',
     code: 'filter',
     description: '在统计操作时设置过滤条件',
-    syntax: '* | stats <函数名>(<字段名>[filter <字段名>=<值>]) 或 * | stats <函数名>(<字段名>) | filter <字段名> <比较运算符> <值>',
+    syntax: '<查询> | stats <函数名>(<字段名>[filter <字段名>=<值>]) 或 * | stats <函数名>(<字段名>) | filter <字段名> <比较运算符> <值>',
     example: '* | stats max(timestamp[filter logType=res]) 或 * | stats max(timestamp) | filter cc > 20',
     disabled: true
   },
@@ -241,7 +241,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'fields',
     code: 'fields',
     description: '指定输出字段名',
-    syntax: '* | fields [<字段名1> [,<字段名2>...]]',
+    syntax: '<查询> | fields [<字段名1> [,<字段名2>...]]',
     example: '* | fields state,city,firstName'
   },
   'table': {
@@ -250,7 +250,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'table',
     code: 'table',
     description: '指定输出字段名, 并在可视化中以表格的方式呈现',
-    syntax: '* | table [<字段名1> [,<字段名2>...]]',
+    syntax: '<查询> | table [<字段名1> [,<字段名2>...]]',
     example: '* | fields state,city,firstName',
     disabled: true
   },
@@ -260,7 +260,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'transaction',
     code: 'transaction',
     description: '将一组相关日志组合成一个"组", 并在单个组内进行事务耗时统计及分组',
-    syntax: '* | transaction <字段名1>[,<字段名2>...] [options]',
+    syntax: '<查询> | transaction <字段名1>[,<字段名2>...] [options]',
     example: '* | transaction a,b maxspan=5s',
     disabled: true
   },
@@ -270,7 +270,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'sort_by',
     code: 'sort by',
     description: '将查询结果按指定字段与排序规则进行排序',
-    syntax: '* | sort by <字段名1>[+/-][,<字段名2>[+/-]...] 其中"+"表示升序, "-"表示降序, 排序规则缺省时默认降序排列',
+    syntax: '<查询> | sort by <字段名1>[+/-][,<字段名2>[+/-]...] 其中"+"表示升序, "-"表示降序, 排序规则缺省时默认降序排列',
     example: '* | sort by _event_time'
   },
   'group_by': {
@@ -279,7 +279,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'group_by',
     code: 'by',
     description: '在进行统计聚合时, 指定分组字段',
-    syntax: '* | stats <函数名>(<字段名1>) [by <字段名2>[,<字段名3>...]]',
+    syntax: '<查询> | stats <函数名>(<字段名1>) [by <字段名2>[,<字段名3>...]]',
     example: '* | stats count(amount) by year'
   },
   'alias': {
@@ -288,7 +288,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'alias',
     code: 'as',
     description: '在进行统计聚合时, 指定聚合字段的别名',
-    syntax: '* | stats <函数名>(<字段名>) [as <自定义名称>]',
+    syntax: '<查询> | stats <函数名>(<字段名>) [as <自定义名称>]',
     example: '* | stats count(amount) as amt'
   },
   'stats': {
@@ -297,7 +297,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'stats',
     code: 'stats',
     description: '将查询结果进行聚合统计',
-    syntax: '* | stats <函数名>(<字段名1>)[ as <自定义名称>][ by <字段名2>[,<字段名3>...]]',
+    syntax: '<查询> | stats <函数名>(<字段名1>)[ as <自定义名称>][ by <字段名2>[,<字段名3>...]]',
     example: '* | stats count(amount) as amt by year'
   },
   'pipe': {
@@ -306,7 +306,7 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     mapping: 'pipe',
     code: '|',
     description: '管道符, 连接数据操作',
-    syntax: '*[|<操作1>...]',
+    syntax: '<查询>[ | <操作1>...]',
     example: '* | stats count(amount) as amt | fields amt'
   },
   'quote': {
