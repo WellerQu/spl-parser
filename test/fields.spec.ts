@@ -22,7 +22,7 @@ describe('识别字段', () => {
   })
 
   it('识别条件中的字段', () => {
-    const fields = recognizeFields('a=b AND c OR (d=e) AND f=[2 TO 10] OR g=/abc/')
+    const fields = recognizeFields('a=b AND c OR (d=e) AND f=[2 TO 10] AND g_h[0]_i=123 OR g=/abc/')
     expect(fields).toEqual<Field[]>([
       {
         fieldName: 'a',
@@ -46,12 +46,19 @@ describe('识别字段', () => {
         location: 'condition'
       },
       {
+        fieldName: 'g_h[0]_i',
+        fieldType: 'number',
+        formatName: 'g_h[0]_i_number',
+        fieldValue: 123,
+        location: 'condition'
+      },
+      {
         fieldName: 'g',
         fieldType: 'regexp',
         formatName: 'g_string',
         fieldValue: 'abc',
         location: 'condition'
-      }
+      },
     ])
   })
 
