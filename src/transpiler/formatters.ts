@@ -1,6 +1,17 @@
 import { pipe } from '../utils/pipe'
 
 /**
+ * 将字符串中的特殊字符 `[]` 转义为 `\\[\\]`
+ * @param str 字符串
+ * @returns 
+ */
+export function escape(str: string): string {
+  return str
+    .replace('[', '\\[')
+    .replace(']', '\\]')
+}
+
+/**
  * 格式化查询条件中的字段名.
  * 将 aaa 输出为 aaa_string 形式
  * @param field 字段
@@ -24,7 +35,7 @@ export function typing(field: ast.Field):string {
  * @param field 字段
  * @returns 字段显示名称
  */
-export const docs = pipe(typing, (name: string) => `doc['${name}'].value`)
+export const docs = pipe(typing, escape, (name: string) => `doc['${name}'].value`)
 
 /**
  * 取出字段的原名称

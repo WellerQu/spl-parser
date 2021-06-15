@@ -45,6 +45,7 @@ describe('字段检索', () => {
       ['host', ['string', 'regexp', 'quote']],
       ['type', ['string', 'quote']],
       ['_exists_', ['string', 'quote']],
+      ['a_b[0]_c', ['string', 'number']]
     ])
   })
 
@@ -103,6 +104,17 @@ describe('字段检索', () => {
   it('_exists_=空字段名称', () => {
     const dsl = transfer('_exists_=""')
     expect(dsl.query.query_string.query).toBe('_exists_:""')
+  })
+
+  it('适配 XML 日志中的字段', () => {
+    {
+      const dsl = transfer('a_b[0]_c=123')
+      expect(dsl.query.query_string.query).toBe('a_b\\[0\\]_c_number:123')
+    }
+    {
+      const dsl = transfer('a_b[0]_c=a123')
+      expect(dsl.query.query_string.query).toBe('a_b\\[0\\]_c_string:a123')
+    }
   })
 })
 
@@ -196,7 +208,8 @@ describe('高级查询', () => {
       ['timestamp', ['string']],
       ['offset', ['string']],
       ['_data_source', ['string']],
-      ['_event_time', ['number', 'string']]
+      ['_event_time', ['number', 'string']],
+      ['a_b[0]_c', ['string', 'number']]
     ])
   })
 
@@ -252,6 +265,18 @@ describe('高级查询', () => {
         'sum(fieldName)': {
           'sum': {
             'field': 'fieldName_number'
+          }
+        }
+      })
+    })
+
+    it('统计语法适配 XML 字段', () => {
+      const dsl = transfer('* | stats count(a_b[0]_c)')
+      expect(dsl.aggs).toEqual({
+        'count(a_b0_c)': {
+          'terms': {
+            'field': 'a_b[0]_c_string',
+            'size': 10000
           }
         }
       })
@@ -386,7 +411,7 @@ describe('高级查询', () => {
       ])
     })
 
-    it('显示规则', () => {
+    it('显式规则', () => {
       const dsl = transfer('* | sort by timestamp+,offset-')
       expect(dsl.sort).toEqual([{
         'timestamp': {
@@ -396,6 +421,16 @@ describe('高级查询', () => {
       },
       {
         'offset': {
+          'order': 'desc',
+          'unmapped_type': 'string'
+        }
+      }])
+    })
+
+    it('sort by 命令适配 XML 字段', () => {
+      const dsl = transfer('* | sort by a_b[0]_c')
+      expect(dsl.sort).toEqual([{
+        'a_b[0]_c': {
           'order': 'desc',
           'unmapped_type': 'string'
         }
@@ -429,6 +464,11 @@ describe('高级查询', () => {
     it('fields对搜索结果的字段进⾏挑选', () => {
       const dsl = transfer('* | fields path,hostname')
       expect(dsl._source).toEqual(['_message', '_event_time', 'path', 'hostname'])
+    })
+
+    it('fields 命令适配 XML 字段', () => {
+      const dsl = transfer('* | fields a_b[0]_c')
+      expect(dsl._source).toEqual(['_message', '_event_time', 'a_b[0]_c'])
     })
   })
 
@@ -562,6 +602,16 @@ describe('高级查询', () => {
           script: {
             'lang': 'painless',
             'source': 'Math.max(doc[\'_event_time\'].value*(3+4), 2)'
+          }
+        }
+      })
+
+      const dslXMLFieldName = transfer('* | eval newFieldName=max(a_b[0]_c*(1+2), 2)')
+      expect(dslXMLFieldName.script_fields).toEqual({
+        newFieldName: {
+          script: {
+            'lang': 'painless',
+            'source': 'Math.max(doc[\'a_b\\[0\\]_c_number\'].value*(1+2), 2)'
           }
         }
       })

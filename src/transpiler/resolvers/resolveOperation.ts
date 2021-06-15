@@ -7,6 +7,15 @@ import { typing } from '../formatters'
 const AGGR_MAX_SIZE = 10000
 
 /**
+ * 移除 ES 不允许的字段名
+ * @param fieldName 字段名
+ * @returns 
+ */
+const removeNotAllowChars = (fieldName: string): string => {
+  return fieldName.replace(/[[\]>]/igm, '')
+}
+
+/**
  * 解析出 aggr 字段
  * @param ast 抽象语法树
  * @returns ES DSL
@@ -37,17 +46,17 @@ export const resolveOperation: Resolver = ast => dsl => {
   }
 
   const initialAggr: elasticsearch.ESQueryStatisticAggr = {
-    [first.alias ?? `${first.aggr}(${first.fieldName})`]: {
+    [first.alias ?? `${first.aggr}(${removeNotAllowChars(first.fieldName)})`]: {
       [first.aggr === 'count' ? 'terms' : first.aggr]: initialTerm
     }
   }
   const aggs: elasticsearch.ESQuery['aggs'] = (groupBy ?? []).reduceRight<elasticsearch.ESQueryStatisticAggr>((aggs, item) => {
-    const fieldName = typing(item)
+    const typedFieldName = typing(item)
 
     return {
-      [item.fieldName]: {
+      [removeNotAllowChars(item.fieldName)]: {
         terms: {
-          field: fieldName,
+          field: typedFieldName,
           size: AGGR_MAX_SIZE
         },
         aggs
