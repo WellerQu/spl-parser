@@ -11,7 +11,8 @@ describe('SPL 语句构造器', () => {
     ['', 'OR', 'abc=123'],
     ['*', 'OR', '* OR abc=123'],
     ['a=b AND b=c', 'OR', 'a=b AND b=c OR abc=123'],
-    ['a=2 OR b=3', 'OR', '(a=2 OR b=3) OR abc=123']
+    ['a=2 OR b=3', 'OR', '(a=2 OR b=3) OR abc=123'],
+    ['a=2 OR b=3 OR a_b[0]_c=4', 'OR', '(a=2 OR b=3 OR a_b[0]_c=4) OR abc=123']
   ])('在仅有查询条件的情况下, 追加查询条件', (src, linker, dst) => {
     {
       const spl = append(src, {

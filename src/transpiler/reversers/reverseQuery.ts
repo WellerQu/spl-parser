@@ -1,6 +1,4 @@
-import { pipe } from '../../utils/pipe'
 import { conditionExpr } from '../conditionExpr'
-import { escape } from '../formatters'
 
 export const reverseQuery: Reverser = ast => spl => {
   const [query] = ast
@@ -8,5 +6,5 @@ export const reverseQuery: Reverser = ast => spl => {
     return spl
   }
 
-  return spl + conditionExpr(query, '=', pipe((field: ast.Field) => field.fieldName, escape))
+  return spl + conditionExpr(query, '=', (field: ast.Field) => field.fieldName)
 }
