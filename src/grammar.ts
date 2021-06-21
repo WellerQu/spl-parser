@@ -95,9 +95,9 @@ KeyValue =
  */
 RangeValue =
   left:(L_M_Bracket/L_L_Bracket) Space*
-  value1:Num
+  value1:(Num / '*')
   Space+ TO Space+
-  value2:Num Space*
+  value2:(Num / '*') Space*
   right:(R_M_Bracket/R_L_Bracket) { return left + value1 + " TO " + value2 + right }
 
 /**

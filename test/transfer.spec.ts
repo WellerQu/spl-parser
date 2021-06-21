@@ -194,6 +194,16 @@ describe('数字字段⽀持范围查询', () => {
     const dsl = transfer('grade=[-2 TO -4]')
     expect(dsl.query.query_string.query).toBe('grade_number:[-2 TO -4]')
   })
+
+  it('* 支持', () => {
+    const dsl = transfer('grade=[* TO -4]')
+    expect(dsl.query.query_string.query).toBe('grade_number:[* TO -4]')
+  })
+
+  it('* 支持', () => {
+    const dsl = transfer('grade=[2 TO *]')
+    expect(dsl.query.query_string.query).toBe('grade_number:[2 TO *]')
+  })
 })
 
 describe('高级查询', () => {
