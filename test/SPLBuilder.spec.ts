@@ -90,7 +90,7 @@ describe('SPL 语句构造器', () => {
   it.each([
     ['* | fields a,b', '* AND abc=123 | fields a,b'],
     ['* | limit 10', '* AND abc=123 | limit 10'],
-    ['* | sort by a,b-,c+', '* AND abc=123 | sort by a,b-,c+']
+    ['* | sort by a,b desc,c asc', '* AND abc=123 | sort by a,b desc,c asc']
   ])('在存在其它指令的情况下, 追加查询条件', (src, dst) => {
     const spl = append(src, {
       type: 'KeyValue',

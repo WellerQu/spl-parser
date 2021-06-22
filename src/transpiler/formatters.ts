@@ -49,10 +49,4 @@ export const raw = (field: ast.Field): string => field.fieldName
  * @param field 抽象语法树中的排序字段
  * @returns 带有排序规则标识的字段名
  */
-export const order = (field: ast.SortField): string => field.fieldName + (
-  field.order === 'asc'
-    ? '+'
-    : field.order === 'desc'
-      ? '-'
-      : ''
-)
+export const order = (field: ast.SortField): string => field.fieldName + (field.order ? ` ${field.order}` : '')

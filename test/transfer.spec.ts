@@ -45,7 +45,8 @@ describe('字段检索', () => {
       ['host', ['string', 'regexp', 'quote']],
       ['type', ['string', 'quote']],
       ['_exists_', ['string', 'quote']],
-      ['a_b[0]_c', ['string', 'number']]
+      ['a_b[0]_c', ['string', 'number']],
+      ['a-b', ['string', 'number']]
     ])
   })
 
@@ -115,6 +116,11 @@ describe('字段检索', () => {
       const dsl = transfer('a_b[0]_c=a123')
       expect(dsl.query.query_string.query).toBe('a_b\\[0\\]_c_string:a123')
     }
+  })
+
+  it('字段名支持中横线"-"', () => {
+    const dsl = transfer('a-b=123')
+    expect(dsl.query.query_string.query).toBe('a-b_number:123')
   })
 })
 
@@ -422,7 +428,7 @@ describe('高级查询', () => {
     })
 
     it('显式规则', () => {
-      const dsl = transfer('* | sort by timestamp+,offset-')
+      const dsl = transfer('* | sort by timestamp asc,offset desc')
       expect(dsl.sort).toEqual([{
         'timestamp': {
           'order': 'asc',
