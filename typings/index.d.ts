@@ -31,6 +31,8 @@ type SuggestionMappings = {
   TableF: 'table',
   TransactionF: 'transaction',
   SortBy: 'sort_by',
+  asc: 'asc',
+  desc: 'desc',
   By: 'group_by',
   As: 'alias',
   Stats: 'stats',

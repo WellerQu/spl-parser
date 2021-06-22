@@ -186,7 +186,7 @@ Sort =
 
 SortField =
   field:StringField
-  order:(Minus { return "desc" } /Plus { return "asc" } )? { return order ? { ...field, order } : field }
+  order:(Space+ rule:$(Desc / Asc) { return rule })? { return order ? { ...field, order } : field }
 
 /**
  * 限制返回数据条数命令
@@ -309,6 +309,8 @@ FieldsF "fields" = "fields"
 TableF "table" = "table"
 TransactionF "transaction" = "transaction"
 SortBy "sort_by" = "sort by"
+Asc "asc" = "asc"
+Desc "desc" = "desc"
 By "group_by" = "by"
 As "alias" = "as"
 Stats "stats" = "stats"
@@ -332,7 +334,7 @@ Minus "minus" = "-"
 Times "times" = "*"
 Num "number" = $(minus:Minus? Space* n:$(Integer ("." Integer)?) { return minus? -n : n})
 Integer "integer" = $([0-9]+)
-FieldName "fieldName" = $([a-zA-Z@_]+[a-zA-Z0-9\\[\\]_]*)
+FieldName "fieldName" = $([a-zA-Z@_]+[a-zA-Z0-9\\[\\]_-]*)
 FieldValue "fieldValue" = $([^ ()\\[\\]\\{\\}]+)
 Identifier "identifier" = $([.0-9a-zA-Z\u4e00-\uffff_@?*]+)
 

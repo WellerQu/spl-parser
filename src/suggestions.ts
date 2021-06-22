@@ -269,9 +269,27 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     tag: '算子',
     mapping: 'sort_by',
     code: 'sort by',
-    description: '将查询结果按指定字段与排序规则进行排序',
-    syntax: '<查询> | sort by <字段名1>[+/-][,<字段名2>[+/-]...] 其中"+"表示升序, "-"表示降序, 排序规则缺省时默认降序排列',
-    example: '* | sort by _event_time'
+    description: '将查询结果按指定字段与排序规则进行排序, 排序规则缺省时默认降序排列',
+    syntax: '<查询> | sort by <字段名1>[ asc/desc][,<字段名2>[ asc/desc]...]',
+    example: '* | sort by _event_time desc'
+  },
+  'asc': {
+    label: '升序排列',
+    tag: '关键词',
+    mapping: 'asc',
+    code: 'asc',
+    description: '指定排序规则为按升序排列',
+    syntax: '<查询> | sort by <字段名1>[ asc][,<字段名2>[ asc]...]',
+    example: '* | sort by _event_time asc'
+  },
+  'desc': {
+    label: '降序排列',
+    tag: '关键词',
+    mapping: 'desc',
+    code: 'desc',
+    description: '指定排序规则为按降序排列',
+    syntax: '<查询> | sort by <字段名1>[ desc][,<字段名2>[ desc]...]',
+    example: '* | sort by _event_time desc'
   },
   'group_by': {
     label: 'Group by',
