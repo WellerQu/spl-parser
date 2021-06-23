@@ -120,7 +120,7 @@ describe('字段检索', () => {
 
   it('字段名支持中横线"-"', () => {
     const dsl = transfer('a-b=123')
-    expect(dsl.query.query_string.query).toBe('a-b_number:123')
+    expect(dsl.query.query_string.query).toBe('a-b_string:123')
   })
 })
 
