@@ -47,9 +47,9 @@ describe('识别字段', () => {
       },
       {
         fieldName: 'g_h[0]_i',
-        fieldType: 'number',
-        formatName: 'g_h[0]_i_number',
-        fieldValue: 123,
+        fieldType: 'string',
+        formatName: 'g_h[0]_i_string',
+        fieldValue: '123',
         location: 'condition'
       },
       {

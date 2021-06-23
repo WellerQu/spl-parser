@@ -87,7 +87,7 @@ KeyValue =
     Quote value:QuoteStr? Quote { return fieldNode(fieldName, "quote", value ? value : '') }
     / Slash value:RegExpStr Slash { return fieldNode(fieldName, "regexp", value) }
     / value:RangeValue { return fieldNode(fieldName, "range", value) }
-    / value:FieldValue { return fieldNode(fieldName, isNaN(value) ? "string" : "number", isNaN(value) ? value : +value) }
+    / value:FieldValue { return fieldNode(fieldName, "string", value) }
   ) { return conditionNode('KeyValue', field, []) }
 
 /**
