@@ -110,7 +110,7 @@ describe('字段检索', () => {
   it('适配 XML 日志中的字段', () => {
     {
       const dsl = transfer('a_b[0]_c=123')
-      expect(dsl.query.query_string.query).toBe('a_b\\[0\\]_c_number:123')
+      expect(dsl.query.query_string.query).toBe('a_b\\[0\\]_c_string:123')
     }
     {
       const dsl = transfer('a_b[0]_c=a123')
