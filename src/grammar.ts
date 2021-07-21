@@ -162,11 +162,11 @@ StatsBy =
 StatsBucketSortLimit =
   field:FieldName
   sortLimits:(
-    Space* L_M_Bracket Space* SortBy Space+ fn:Identifier Space* Comma Space* sn:Integer Space* R_M_Bracket { return {fn, sn} }
+    Space* L_L_Bracket Space* SortBy Space+ fn:Identifier Space* Comma Space* sn:Integer Space* R_L_Bracket { return {fn, sn} }
   )? { return{ ...fieldNode(field, 'string'), sortLimits} }
 
 StatsBeforeFilter =
-  L_M_Bracket Space* FilterF Space+ expr:MetricFuncExpr Space* R_M_Bracket { return expr }
+  L_L_Bracket Space* FilterF Space+ expr:MetricFuncExpr Space* R_L_Bracket { return expr }
 
 StatsAfterFilter =
   Space Pipe Space FilterF Space+ expr:MetricFuncExpr moreExprs:(Space* Comma Space* next:MetricFuncExpr { return next })* { return [expr, ...moreExprs] }
