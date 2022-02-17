@@ -327,19 +327,34 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     syntax: '<查询>[ | <操作1>...]',
     example: '* | stats count(amount) as amt | fields amt'
   },
-  'quote': {
+  'single_quote': {
     label: '"',
     tag: '符号',
-    mapping: 'quote',
+    mapping: 'single_quote',
+    code: '"',
+    description: '单引号, 包裹词组的符号',
+    syntax: '"<关键词1> <关键词2>[ <关键词3>...]"',
+    example: '\'local host\''
+  },
+  'double_quote': {
+    label: '"',
+    tag: '符号',
+    mapping: 'double_quote',
     code: '"',
     description: '双引号, 包裹词组的符号',
     syntax: '"<关键词1> <关键词2>[ <关键词3>...]"',
     example: '"local host"'
   },
-  'quote_string': {
+  'single_quote_string': {
     label: '字符串界定符',
     tag: '符号',
-    mapping: 'quote_string',
+    mapping: 'single_quote_string',
+    code: '',
+  },
+  'double_quote_string': {
+    label: '字符串界定符',
+    tag: '符号',
+    mapping: 'double_quote_string',
     code: '',
   },
   'slash': {

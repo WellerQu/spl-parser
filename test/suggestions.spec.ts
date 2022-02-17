@@ -11,6 +11,20 @@ describe('符号提示', () => {
     ])
   })
 
+  it('双引号关键词', () => {
+    const [, suggestions] = tryParse('"a')
+    expect(suggestions).toEqual([
+      SUGGESTIONS['double_quote']
+    ])
+  })
+
+  it('单引号关键词', () => {
+    const [, suggestions] = tryParse('\'a')
+    expect(suggestions).toEqual([
+      SUGGESTIONS['single_quote']
+    ])
+  })
+
   it('多个条件', () => {
     const [, suggestions] = tryParse('a ')
     expect(suggestions).toHaveLength(5)

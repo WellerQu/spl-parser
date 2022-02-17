@@ -75,7 +75,8 @@ Condition = decorator:(not:NOT Space+ { return not })? node:(
  */
 Keyword =
   singleKeyword:Identifier { return conditionNode('SingleKeyword', singleKeyword, []) }
-  / Quote unionKeyword:QuoteStr? Quote { return conditionNode('UnionKeywords', unionKeyword, []) }
+  / SingleQuote unionKeyword:SingleQuoteStr? SingleQuote { return conditionNode('UnionKeywords', unionKeyword, []) }
+  / DoubleQuote unionKeyword:DoubleQuoteStr? DoubleQuote { return conditionNode('UnionKeywords', unionKeyword, []) }
 
 /**
  * 键值对
@@ -84,7 +85,8 @@ KeyValue =
   fieldName:FieldName
   Space* Equal Space*
   field:(
-    Quote value:QuoteStr? Quote { return fieldNode(fieldName, "quote", value ? value : '') }
+    SingleQuote value:SingleQuoteStr? SingleQuote { return fieldNode(fieldName, "singleQuote", value ? value : '') }
+    / DoubleQuote value:DoubleQuoteStr? DoubleQuote { return fieldNode(fieldName, "doubleQuote", value ? value : '') }
     / Slash value:RegExpStr Slash { return fieldNode(fieldName, "regexp", value) }
     / value:RangeValue { return fieldNode(fieldName, "range", value) }
     / value:FieldValue { return fieldNode(fieldName, "string", value) }
@@ -315,8 +317,13 @@ By "group_by" = "by"
 As "alias" = "as"
 Stats "stats" = "stats"
 Pipe "pipe" = "|"
-Quote "quote" = '"'
-QuoteStr "quote_string" = $([^"]+)
+Translate 'translate' = '\\\\\\\\'
+SingleQuote "single_quote" = '\\''
+SingleTranslationQuote "single_translation_quote" = '\\\\\\''
+DoubleQuote "double_quote" = '"'
+DoubleTranslationQuote "double_translation_quote" = '\\\\\\"'
+SingleQuoteStr "single_quote_string" = $((SingleTranslationQuote / Translate / [^'])+)
+DoubleQuoteStr "double_quote_string" = $((DoubleTranslationQuote / Translate / [^"])+)
 Slash "slash" = "/"
 Comma "comma" = ","
 RegExpStr "regexp" = $([^/]+)

@@ -12,7 +12,9 @@ describe('SPL 语句构造器', () => {
     ['*', 'OR', '* OR abc=123'],
     ['a=b AND b=c', 'OR', 'a=b AND b=c OR abc=123'],
     ['a=2 OR b=3', 'OR', '(a=2 OR b=3) OR abc=123'],
-    ['a=2 OR b=3 OR a_b[0]_c=4', 'OR', '(a=2 OR b=3 OR a_b[0]_c=4) OR abc=123']
+    ['a=2 OR b=3 OR a_b[0]_c=4', 'OR', '(a=2 OR b=3 OR a_b[0]_c=4) OR abc=123'],
+    ['a=2 AND (b=3 OR a_b[0]_c=4)', 'OR', 'a=2 AND (b=3 OR a_b[0]_c=4) OR abc=123'],
+    ['a=2 OR (b=3 OR a_b[0]_c=4)', 'OR', '(a=2 OR (b=3 OR a_b[0]_c=4)) OR abc=123'],
   ])('在仅有查询条件的情况下, 追加查询条件', (src, linker, dst) => {
     {
       const spl = append(src, {
@@ -101,6 +103,50 @@ describe('SPL 语句构造器', () => {
       },
       decorator: []
     })
+
+    expect(spl).toBe(dst)
+  })
+
+  it.each<[string, ast.ConditionLinker, string]>([
+    ['', 'AND', 'abc="\\\\ \\\\"handsome FEer\\\\""'],
+    ['*', 'AND', '* AND abc="\\\\ \\\\"handsome FEer\\\\""'],
+    ['"Hello"', 'AND', '"Hello" AND abc="\\\\ \\\\"handsome FEer\\\\""'],
+    ['\'Hello\'', 'AND', '"Hello" AND abc="\\\\ \\\\"handsome FEer\\\\""'],
+    ['ab=1', 'AND', 'ab=1 AND abc="\\\\ \\\\"handsome FEer\\\\""'],
+    ['ab=1 AND cd=2', 'AND', 'ab=1 AND cd=2 AND abc="\\\\ \\\\"handsome FEer\\\\""'],
+    ['ab=1 OR cd=2', 'AND', '(ab=1 OR cd=2) AND abc="\\\\ \\\\"handsome FEer\\\\""'],
+  ])('追加带有嵌套双引号的查询条件', (src, linker, dst) => {
+    const spl = append(src, {
+      type: 'KeyValue',
+      value: {
+        fieldName: 'abc',
+        fieldType: 'string',
+        fieldValue: '"\\\\ \\\\"handsome FEer\\\\""'
+      },
+      decorator: []
+    }, linker)
+
+    expect(spl).toBe(dst)
+  })
+
+  it.each<[string, ast.ConditionLinker, string]>([
+    ['', 'AND', 'abc=\'\\\\ \\\\\'handsome FEer\\\\\'\''],
+    ['*', 'AND', '* AND abc=\'\\\\ \\\\\'handsome FEer\\\\\'\''],
+    ['"Hello"', 'AND', '"Hello" AND abc=\'\\\\ \\\\\'handsome FEer\\\\\'\''],
+    ['\'Hello\'', 'AND', '"Hello" AND abc=\'\\\\ \\\\\'handsome FEer\\\\\'\''],
+    ['ab=1', 'AND', 'ab=1 AND abc=\'\\\\ \\\\\'handsome FEer\\\\\'\''],
+    ['ab=1 AND cd=2', 'AND', 'ab=1 AND cd=2 AND abc=\'\\\\ \\\\\'handsome FEer\\\\\'\''],
+    ['ab=1 OR cd=2', 'AND', '(ab=1 OR cd=2) AND abc=\'\\\\ \\\\\'handsome FEer\\\\\'\''],
+  ])('追加带有嵌套单引号的查询条件', (src, linker, dst) => {
+    const spl = append(src, {
+      type: 'KeyValue',
+      value: {
+        fieldName: 'abc',
+        fieldType: 'string',
+        fieldValue: '\'\\\\ \\\\\'handsome FEer\\\\\'\''
+      },
+      decorator: []
+    }, linker)
 
     expect(spl).toBe(dst)
   })

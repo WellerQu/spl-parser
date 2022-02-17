@@ -22,8 +22,13 @@ describe('全文检索', () => {
     expect(dsl.query.query_string.query).toBe('"error is"')
   })
 
-  it('空词组""', () => {
+  it('双引号空词组""', () => {
     const dsl = transfer('""')
+    expect(dsl.query.query_string.query).toBe('""')
+  })
+
+  it('单引号空词组\'\'', () => {
+    const dsl = transfer('\'\'')
     expect(dsl.query.query_string.query).toBe('""')
   })
 
@@ -37,14 +42,24 @@ describe('全文检索', () => {
     expect(dsl.query.query_string.query).toBe('@_?*.')
     expect(dsl.query.query_string.default_field).toBe('_message')
   })
+
+  it('嵌套单引号字符串', () => {
+    const dsl = transfer('\'\\\'hello\\\'\'')
+    expect(dsl.query.query_string.query).toBe('"\\\'hello\\\'"')
+  })
+
+  it('嵌套双引号字符串', () => {
+    const dsl = transfer('"\\"hello\\""')
+    expect(dsl.query.query_string.query).toBe('"\\"hello\\""')
+  })
 })
 
 describe('字段检索', () => {
   const transfer = transferFactory({
     typeMapping: new Map<string, TypeInfo[]>([
-      ['host', ['string', 'regexp', 'quote']],
-      ['type', ['string', 'quote']],
-      ['_exists_', ['string', 'quote']],
+      ['host', ['string', 'regexp', 'singleQuote', 'doubleQuote']],
+      ['type', ['string', 'singleQuote', 'doubleQuote']],
+      ['_exists_', ['string', 'singleQuote', 'doubleQuote']],
       ['a_b[0]_c', ['string', 'number']],
       ['a-b', ['string', 'number']]
     ])
@@ -63,8 +78,25 @@ describe('字段检索', () => {
   })
 
   it('字段type中匹配词组online offline的⽇志', () => {
-    const dsl = transfer('type="online offline"')
-    expect(dsl.query.query_string.query).toBe('type_string:"online offline"')
+    {
+      const dsl = transfer('type="online offline"')
+      expect(dsl.query.query_string.query).toBe('type_string:"online offline"')
+    }
+    {
+      const dsl = transfer('type=\'online offline\'')
+      expect(dsl.query.query_string.query).toBe('type_string:"online offline"')
+    }
+  })
+
+  it('字段type中匹配词组"online offline" greet的⽇志', () => {
+    {
+      const dsl = transfer('type="\\"online offline\\" greet"')
+      expect(dsl.query.query_string.query).toBe('type_string:"\\"online offline\\" greet"')
+    }
+    {
+      const dsl = transfer('type=\'\\\'online offline\\\' greet\'')
+      expect(dsl.query.query_string.query).toBe('type_string:"\\\'online offline\\\' greet"')
+    }
   })
 
   it('存在字段type的⽇志', () => {
@@ -82,7 +114,7 @@ describe('字段检索', () => {
   it('type 字段不支持正则检索', () => {
     expect(() => {
       transfer('type=/int/')
-    }).toThrow('字段 "type" 的类型 "[string,quote]" 不支持 regexp 的运算')
+    }).toThrow('字段 "type" 的类型 "[string,singleQuote,doubleQuote]" 不支持 regexp 的运算')
 
   })
 
@@ -184,7 +216,7 @@ describe('数字字段⽀持范围查询', () => {
     expect(dsl.query.query_string.query).toBe('grade_number:{30 TO 60}')
   })
 
-  it('⽅括号，花括号组合使⽤', () => {
+  it('⽅括号, 花括号组合使⽤', () => {
     {
       const dsl = transfer('grade=[50 TO 80}')
       expect(dsl.query.query_string.query).toBe('grade_number:[50 TO 80}')
@@ -396,7 +428,7 @@ describe('高级查询', () => {
     })
   })
 
-  describe('sort根据指定字段排序，多个字段时依次级联排序，默认为降序', () => {
+  describe('sort根据指定字段排序, 多个字段时依次级联排序, 默认为降序', () => {
     it('默认字段', () => {
       const dsl = transfer('*')
       expect(dsl.sort).toEqual([
