@@ -328,10 +328,10 @@ export const SUGGESTIONS: Record<SuggestionMapping, SuggestionItem | undefined> 
     example: '* | stats count(amount) as amt | fields amt'
   },
   'single_quote': {
-    label: '"',
+    label: '\'',
     tag: '符号',
     mapping: 'single_quote',
-    code: '"',
+    code: '\'',
     description: '单引号, 包裹词组的符号',
     syntax: '"<关键词1> <关键词2>[ <关键词3>...]"',
     example: '\'local host\''
